@@ -2,12 +2,14 @@ package main
 
 import (
 	"bytes"
+	"crypto/subtle"
 	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type FeatureResponse struct {
@@ -155,8 +157,47 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `{"status":"ok","service":"gateway"}`)
 }
 
+// writeJSONError writes a JSON error response with the given status code.
+func writeJSONError(w http.ResponseWriter, status int, msg string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	fmt.Fprintf(w, `{"error":%q}`, msg)
+}
+
+// requireAPIKey is middleware that validates the client API key.
+// The key is read from the GATEWAY_API_KEY environment variable.
+// Clients may send it via the "X-API-Key" header or as a Bearer token
+// in the "Authorization" header. If the server key is not configured,
+// all requests are rejected (fail-closed).
+func requireAPIKey(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		serverKey := os.Getenv("GATEWAY_API_KEY")
+		if serverKey == "" {
+			writeJSONError(w, http.StatusServiceUnavailable, "API key not configured on server")
+			return
+		}
+
+		provided := r.Header.Get("X-API-Key")
+		if provided == "" {
+			if auth := r.Header.Get("Authorization"); strings.HasPrefix(auth, "Bearer ") {
+				provided = strings.TrimPrefix(auth, "Bearer ")
+			}
+		}
+
+		if subtle.ConstantTimeCompare([]byte(provided), []byte(serverKey)) != 1 {
+			writeJSONError(w, http.StatusUnauthorized, "invalid or missing API key")
+			return
+		}
+
+		next(w, r)
+	}
+}
+
 func main() {
-	http.HandleFunc("/api/v1/encrypt-image", encryptHandler)
+	if os.Getenv("GATEWAY_API_KEY") == "" {
+		fmt.Println("WARNING: GATEWAY_API_KEY is not set; API requests will be rejected")
+	}
+	http.HandleFunc("/api/v1/encrypt-image", requireAPIKey(encryptHandler))
 	http.HandleFunc("/health", healthHandler)
 	fmt.Println("Gateway listening on :8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {

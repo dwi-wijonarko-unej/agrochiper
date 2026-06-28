@@ -40,12 +40,41 @@ The static homepage is served by nginx:
 
 - http://localhost:8084 — AgroCipher landing page (`web/index.html`)
 
+## Authentication
+
+The `/api/v1/encrypt-image` endpoint is protected with an API key. The key is
+read from the `GATEWAY_API_KEY` environment variable (set it in your `.env`).
+
+Clients must send the key on every request via either:
+
+- header `X-API-Key: <key>`, or
+- header `Authorization: Bearer <key>`
+
+If the key is missing or wrong the gateway returns `401 Unauthorized`. If the
+server has not configured `GATEWAY_API_KEY`, the gateway rejects all requests
+with `503` (fail-closed). The `/health` endpoint remains public.
+
+Generate a strong key for production:
+
+```bash
+openssl rand -hex 32
+```
+
 ## Encrypt test image
 
-Assuming `sample.jpg` exists in the current folder:
+Assuming `sample.jpg` exists in the current folder and `GATEWAY_API_KEY` is set:
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/encrypt-image \
+  -H "X-API-Key: $GATEWAY_API_KEY" \
+  -F "file=@sample.jpg"
+```
+
+Equivalent using a Bearer token:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/encrypt-image \
+  -H "Authorization: Bearer $GATEWAY_API_KEY" \
   -F "file=@sample.jpg"
 ```
 
