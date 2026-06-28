@@ -11,6 +11,7 @@ Services:
 - `feature-service` (Python/FastAPI): entropy + GLCM texture extraction
 - `selector-service` (Python/FastAPI): Decision Tree-based AI Selector
 - `encryption-service` (Python/FastAPI): UHC + Blowfish hybrid encryption and decrypt-verify with SQLite logging
+- `web` (nginx): static landing page served at http://localhost:8084
 
 Configuration:
 
@@ -32,6 +33,12 @@ curl http://localhost:8081/health
 curl http://localhost:8082/health
 curl http://localhost:8083/health
 ```
+
+## Web landing page
+
+The static homepage is served by nginx:
+
+- http://localhost:8084 — AgroCipher landing page (`web/index.html`)
 
 ## Encrypt test image
 

@@ -1,4 +1,4 @@
-version: '3.9'
+version: "3.9"
 
 services:
   gateway:
@@ -41,4 +41,13 @@ services:
       - .env
     volumes:
       - ./data/encryption:/data
+    restart: unless-stopped
+
+  web:
+    image: nginx:alpine
+    container_name: coffee-web
+    ports:
+      - "8084:80"
+    volumes:
+      - ./web:/usr/share/nginx/html:ro
     restart: unless-stopped
