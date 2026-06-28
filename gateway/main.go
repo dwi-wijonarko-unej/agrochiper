@@ -171,16 +171,18 @@ func writeJSONError(w http.ResponseWriter, status int, msg string) {
 // all requests are rejected (fail-closed).
 func requireAPIKey(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		serverKey := os.Getenv("GATEWAY_API_KEY")
+		// TrimSpace guards against env files with CRLF line endings or
+		// trailing whitespace, a common cause of silent key mismatches.
+		serverKey := strings.TrimSpace(os.Getenv("GATEWAY_API_KEY"))
 		if serverKey == "" {
 			writeJSONError(w, http.StatusServiceUnavailable, "API key not configured on server")
 			return
 		}
 
-		provided := r.Header.Get("X-API-Key")
+		provided := strings.TrimSpace(r.Header.Get("X-API-Key"))
 		if provided == "" {
-			if auth := r.Header.Get("Authorization"); strings.HasPrefix(auth, "Bearer ") {
-				provided = strings.TrimPrefix(auth, "Bearer ")
+			if auth := strings.TrimSpace(r.Header.Get("Authorization")); strings.HasPrefix(auth, "Bearer ") {
+				provided = strings.TrimSpace(strings.TrimPrefix(auth, "Bearer "))
 			}
 		}
 
