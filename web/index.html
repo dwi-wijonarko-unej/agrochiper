@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgroCipher – Adaptive Coffee Leaf Image Encryption</title>
+  <!-- Tailwind via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50:  '#f0fdf4',
+              100: '#dcfce7',
+              200: '#b9f8cf',
+              300: '#7bf1a8',
+              400: '#05df72',
+              500: '#00c950',
+              600: '#00a63e',
+              700: '#008236',
+              800: '#016630',
+              900: '#0d542b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .lang-block { display: none; }
+  </style>
+</head>
+<body class="min-h-full bg-primary-50 text-slate-900">
+  <div class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="border-b border-primary-200 bg-white/90 backdrop-blur">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+        <!-- Logo + title -->
+        <div class="flex items-center space-x-4">
+          <a href="https://unej.ac.id" target="_blank" rel="noopener noreferrer">
+            <img
+              src="https://unej.ac.id/wp-content/uploads/2026/02/header-logo-unej-2026.webp"
+              alt="Universitas Jember"
+              class="h-10 w-auto"
+            />
+          </a>
+          <div class="flex flex-col">
+            <span class="text-xs font-semibold text-primary-700 uppercase tracking-wide">
+              Universitas Jember – Agro-IoT Research
+            </span>
+            <span class="text-sm text-slate-600">
+              AI-driven Microservices for Adaptive Coffee Disease Image Encryption
+            </span>
+          </div>
+        </div>
+
+        <!-- Language toggle (for convenience) -->
+        <div class="flex items-center space-x-2 text-xs font-semibold">
+          <a href="?lang=id" class="px-2 py-1 rounded-md border border-primary-200 bg-primary-50 text-primary-800 hover:bg-primary-100">ID</a>
+          <a href="?lang=en" class="px-2 py-1 rounded-md border border-primary-200 bg-white text-slate-700 hover:bg-primary-50">EN</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="flex-1">
+      <!-- Hero section -->
+      <section class="bg-gradient-to-br from-primary-50 via-white to-primary-100">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
+          <div class="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+
+            <!-- Left: text -->
+            <div class="w-full lg:w-1/2 space-y-6">
+              <!-- Badge -->
+              <p class="inline-flex items-center rounded-full bg-primary-100 px-3 py-1 text-xs font-semibold text-primary-800 uppercase tracking-wide">
+                <span class="lang-block lang-en">Research Prototype · TRL 3 Microservices</span>
+                <span class="lang-block lang-id">Purwarupa Riset · Arsitektur Microservices TKT 3</span>
+              </p>
+
+              <!-- Title -->
+              <h1 class="text-3xl sm:text-4xl lg:text-5xl font-semibold text-slate-900 leading-tight">
+                <span class="lang-block lang-en">
+                  AgroCipher:
+                  <span class="text-primary-700">AI Orchestrated</span> Hybrid
+                  Image Encryption for Coffee Leaf Disease
+                </span>
+                <span class="lang-block lang-id">
+                  AgroCipher:
+                  <span class="text-primary-700">Orkestrasi AI</span> untuk
+                  Enkripsi Citra Daun Kopi secara Adaptif
+                </span>
+              </h1>
+
+              <!-- Subtitle -->
+              <p class="text-sm sm:text-base text-slate-700 leading-relaxed">
+                <span class="lang-block lang-en">
+                  This homepage presents the research prototype of a microservices-based
+                  platform that orchestrates <span class="font-semibold">AI Selector</span> to choose
+                  the most suitable cipher (UHC, Blowfish, or Hybrid UHC–Blowfish) for
+                  coffee leaf images in an Agro-IoT ecosystem.
+                </span>
+                <span class="lang-block lang-id">
+                  Halaman ini menampilkan purwarupa riset platform berbasis microservices
+                  yang mengorkestrasi <span class="font-semibold">AI Selector</span> untuk memilih
+                  algoritma sandi paling sesuai (UHC, Blowfish, atau Hybrid UHC–Blowfish)
+                  bagi citra daun kopi dalam ekosistem Agro-IoT.
+                </span>
+              </p>
+
+              <!-- Bullet points -->
+              <ul class="text-sm text-slate-700 space-y-2">
+                <li class="flex items-start">
+                  <span class="mt-1 h-2 w-2 rounded-full bg-primary-500 mr-2"></span>
+                  <span class="lang-block lang-en">
+                    AI-driven decision tree selects the cipher based on entropy and GLCM texture metrics.
+                  </span>
+                  <span class="lang-block lang-id">
+                    Pohon keputusan berbasis AI memilih algoritma sandi berdasarkan nilai entropi dan metrik tekstur GLCM.
+                  </span>
+                </li>
+                <li class="flex items-start">
+                  <span class="mt-1 h-2 w-2 rounded-full bg-primary-500 mr-2"></span>
+                  <span class="lang-block lang-en">
+                    Microservices architecture: Gateway, Feature Extractor, AI Selector, and Encryption Service.
+                  </span>
+                  <span class="lang-block lang-id">
+                    Arsitektur microservices: Gateway, Layanan Ekstraksi Fitur, Layanan AI Selector, dan Layanan Enkripsi.
+                  </span>
+                </li>
+                <li class="flex items-start">
+                  <span class="mt-1 h-2 w-2 rounded-full bg-primary-500 mr-2"></span>
+                  <span class="lang-block lang-en">
+                    SQLite-based experiment logging captures runtimes, ciphertext entropy, and PSNR for analysis.
+                  </span>
+                  <span class="lang-block lang-id">
+                    Pencatatan eksperimen berbasis SQLite menyimpan waktu eksekusi, entropi ciphertext, dan PSNR untuk analisis.
+                  </span>
+                </li>
+              </ul>
+
+              <!-- Buttons -->
+              <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-4">
+                <a
+                  href="#demo"
+                  class="inline-flex items-center justify-center rounded-md bg-primary-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700"
+                >
+                  <span class="lang-block lang-en">View Demo Workflow</span>
+                  <span class="lang-block lang-id">Lihat Alur Demo</span>
+                </a>
+                <a
+                  href="#architecture"
+                  class="inline-flex items-center justify-center rounded-md border border-primary-200 bg-white px-5 py-2.5 text-sm font-semibold text-primary-800 hover:border-primary-300 hover:bg-primary-50"
+                >
+                  <span class="lang-block lang-en">System Architecture</span>
+                  <span class="lang-block lang-id">Arsitektur Sistem</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Right: illustration box -->
+            <div class="w-full lg:w-1/2">
+              <div class="relative">
+                <div class="absolute -top-6 -left-6 h-20 w-20 rounded-full bg-primary-100 blur-xl"></div>
+                <div class="absolute -bottom-6 -right-6 h-24 w-24 rounded-full bg-primary-200 blur-xl"></div>
+
+                <div class="relative rounded-2xl border border-primary-100 bg-white shadow-sm shadow-primary-100/60 p-5">
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-2">
+                      <div class="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
+                        <span class="text-xs font-bold text-primary-700">AI</span>
+                      </div>
+                      <div>
+                        <p class="text-xs font-semibold text-slate-800 lang-block lang-en">
+                          AI Selector Decision Flow
+                        </p>
+                        <p class="text-xs font-semibold text-slate-800 lang-block lang-id">
+                          Alur Keputusan AI Selector
+                        </p>
+                        <p class="text-[11px] text-slate-500 lang-block lang-en">
+                          Entropy &amp; GLCM → Cipher choice
+                        </p>
+                        <p class="text-[11px] text-slate-500 lang-block lang-id">
+                          Entropi &amp; GLCM → Pemilihan algoritma sandi
+                        </p>
+                      </div>
+                    </div>
+                    <span class="inline-flex items-center rounded-full bg-primary-50 px-2 py-1 text-[11px] font-semibold text-primary-700">
+                      UHC · Blowfish · Hybrid
+                    </span>
+                  </div>
+
+                  <!-- Mini diagram -->
+                  <div class="space-y-4 text-xs text-slate-700">
+                    <div class="flex items-center">
+                      <div class="flex-1">
+                        <p class="font-semibold text-slate-800 lang-block lang-en">Edge Device</p>
+                        <p class="font-semibold text-slate-800 lang-block lang-id">Perangkat Edge</p>
+                        <p class="text-[11px] text-slate-500 lang-block lang-en">
+                          Coffee leaf image upload (HTTPS)
+                        </p>
+                        <p class="text-[11px] text-slate-500 lang-block lang-id">
+                          Unggah citra daun kopi (HTTPS)
+                        </p>
+                      </div>
+                      <div class="flex items-center text-primary-600 text-[11px] font-semibold">
+                        <span class="mr-1">→</span>
+                        <span class="lang-block lang-en">API Gateway</span>
+                        <span class="lang-block lang-id">API Gateway</span>
+                      </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div class="rounded-md border border-primary-100 bg-primary-50 p-2">
+                        <p class="font-semibold text-[11px] text-primary-800 lang-block lang-en">
+                          Feature Extractor
+                        </p>
+                        <p class="font-semibold text-[11px] text-primary-800 lang-block lang-id">
+                          Layanan Ekstraksi Fitur
+                        </p>
+                        <p class="text-[11px] text-slate-600 lang-block lang-en">
+                          Entropy + GLCM texture metrics
+                        </p>
+                        <p class="text-[11px] text-slate-600 lang-block lang-id">
+                          Entropi + metrik tekstur GLCM
+                        </p>
+                      </div>
+                      <div class="rounded-md border border-primary-100 bg-primary-50 p-2">
+                        <p class="font-semibold text-[11px] text-primary-800 lang-block lang-en">
+                          AI Selector
+                        </p>
+                        <p class="font-semibold text-[11px] text-primary-800 lang-block lang-id">
+                          Layanan AI Selector
+                        </p>
+                        <p class="text-[11px] text-slate-600 lang-block lang-en">
+                          Decision Tree · UHC / Blowfish / Hybrid
+                        </p>
+                        <p class="text-[11px] text-slate-600 lang-block lang-id">
+                          Pohon keputusan · UHC / Blowfish / Hybrid
+                        </p>
+                      </div>
+                      <div class="rounded-md border border-primary-100 bg-primary-50 p-2">
+                        <p class="font-semibold text-[11px] text-primary-800 lang-block lang-en">
+                          Encryption Service
+                        </p>
+                        <p class="font-semibold text-[11px] text-primary-800 lang-block lang-id">
+                          Layanan Enkripsi
+                        </p>
+                        <p class="text-[11px] text-slate-600 lang-block lang-en">
+                          Hybrid UHC–Blowfish<br />Encrypt &amp; decrypt-verify
+                        </p>
+                        <p class="text-[11px] text-slate-600 lang-block lang-id">
+                          Hybrid UHC–Blowfish<br />Enkripsi &amp; verifikasi dekripsi
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center justify-between border-t border-primary-100 pt-3">
+                      <div>
+                        <p class="font-semibold text-[11px] text-slate-800 lang-block lang-en">
+                          Experiment Logging
+                        </p>
+                        <p class="font-semibold text-[11px] text-slate-800 lang-block lang-id">
+                          Pencatatan Eksperimen
+                        </p>
+                        <p class="text-[11px] text-slate-500 lang-block lang-en">
+                          SQLite · filename · method · runtimes · cipher entropy · PSNR
+                        </p>
+                        <p class="text-[11px] text-slate-500 lang-block lang-id">
+                          SQLite · nama berkas · metode · waktu · entropi cipher · PSNR
+                        </p>
+                      </div>
+                      <div class="rounded-md bg-primary-50 px-3 py-1 text-[11px] font-semibold text-primary-700">
+                        TRL 3 · Microservices
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <p class="mt-4 text-[11px] text-slate-500 text-center lg:text-right">
+                <span class="lang-block lang-en">
+                  Illustration: conceptual flow of the AI-driven microservices architecture
+                  for adaptive coffee leaf image encryption.
+                </span>
+                <span class="lang-block lang-id">
+                  Ilustrasi: alur konseptual arsitektur microservices berbasis AI
+                  untuk enkripsi citra daun kopi secara adaptif.
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Overview -->
+      <section id="about" class="border-t border-primary-100 bg-white">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <h2 class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-en">Research Overview</h2>
+          <h2 class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-id">Gambaran Umum Riset</h2>
+
+          <p class="text-sm text-slate-700 leading-relaxed lang-block lang-en">
+            This prototype implements a microservices architecture to transform a
+            monolithic Python-based hybrid cipher into independent, containerized
+            services. The design aligns with TRL 3 requirements, enabling dynamic
+            AI-driven cipher selection, experiment logging, and potential edge–cloud
+            deployment in future work.
+          </p>
+          <p class="text-sm text-slate-700 leading-relaxed lang-block lang-id">
+            Purwarupa ini mengimplementasikan arsitektur microservices untuk
+            mentransformasikan algoritma hybrid berbasis Python yang semula
+            monolitik menjadi layanan mandiri dalam container. Desain ini selaras
+            dengan kebutuhan TKT 3, memungkinkan pemilihan sandi adaptif berbasis AI,
+            pencatatan eksperimen, dan potensi pengembangan ke skenario edge–cloud.
+          </p>
+        </div>
+      </section>
+
+      <!-- Architecture -->
+      <section id="architecture" class="border-t border-primary-100 bg-primary-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <h2 class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-en">System Architecture</h2>
+          <h2 class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-id">Arsitektur Sistem</h2>
+
+          <p class="text-sm text-slate-700 leading-relaxed lang-block lang-en">
+            The architecture decomposes the pipeline into four core services:
+            API Gateway &amp; Orchestrator, Feature Extractor Service, AI Selector Service,
+            and Encryption Service with decrypt-and-verify routines and SQLite-based logging.
+            This structure supports modular deployment and clear separation of concerns.
+          </p>
+          <p class="text-sm text-slate-700 leading-relaxed lang-block lang-id">
+            Arsitektur sistem memecah pipeline menjadi empat layanan inti:
+            API Gateway &amp; Orchestrator, Layanan Ekstraksi Fitur, Layanan AI Selector,
+            serta Layanan Enkripsi dengan rutin decrypt-and-verify dan pencatatan
+            berbasis SQLite. Struktur ini mendukung deployment modular dan pemisahan
+            tanggung jawab yang jelas.
+          </p>
+        </div>
+      </section>
+
+      <!-- Demo -->
+      <section id="demo" class="border-t border-primary-100 bg-white">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <h2 class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-en">Demo &amp; Experiment</h2>
+          <h2 class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-id">Demo &amp; Eksperimen</h2>
+
+          <p class="text-sm text-slate-700 leading-relaxed lang-block lang-en">
+            In the current deployment, coffee leaf images are submitted via the
+            API Gateway, processed by the feature extractor and AI selector, then
+            encrypted using UHC, Blowfish, or Hybrid UHC–Blowfish based on the
+            image complexity. Experimental metrics are recorded in SQLite for
+            quantitative analysis.
+          </p>
+          <p class="text-sm text-slate-700 leading-relaxed lang-block lang-id">
+            Pada deployment saat ini, citra daun kopi dikirim melalui API Gateway,
+            diproses oleh layanan ekstraksi fitur dan AI selector, lalu dienkripsi
+            menggunakan UHC, Blowfish, atau Hybrid UHC–Blowfish bergantung pada
+            kompleksitas citra. Metrik eksperimen dicatat di SQLite untuk analisis
+            kuantitatif.
+          </p>
+        </div>
+      </section>
+
+      <!-- Team -->
+      <section id="team" class="border-t border-primary-100 bg-primary-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <h2 class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-en">Research Team</h2>
+          <h2 class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-id">Tim Peneliti</h2>
+
+          <p class="text-sm text-slate-700 leading-relaxed lang-block lang-en">
+            This system is developed as part of an Agro-IoT and cryptography
+            research initiative at Universitas Jember, integrating expertise
+            in image processing, AI, and secure microservices architecture.
+          </p>
+          <p class="text-sm text-slate-700 leading-relaxed lang-block lang-id">
+            Sistem ini dikembangkan sebagai bagian dari inisiatif riset Agro-IoT
+            dan kriptografi di Universitas Jember, mengintegrasikan keahlian
+            pemrosesan citra, kecerdasan buatan, dan arsitektur microservices
+            yang aman.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-primary-200 bg-white">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <p class="text-xs text-slate-500 lang-block lang-en">
+          © 2026 Universitas Jember · AgroCipher Microservices Prototype for Adaptive Coffee Leaf Image Encryption.
+        </p>
+        <p class="text-xs text-slate-500 lang-block lang-id">
+          © 2026 Universitas Jember · Purwarupa Microservices AgroCipher untuk Enkripsi Citra Penyakit Daun Kopi secara Adaptif.
+        </p>
+        <p class="text-xs text-slate-500">
+          Backend: Go + Python · Docker Compose · SQLite experiment logging.
+        </p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Simple lang switch based on URL parameter ?lang=id or ?lang=en -->
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const lang = (params.get('lang') || 'en').toLowerCase();
+      const blocks = document.querySelectorAll('.lang-block');
+      blocks.forEach(b => {
+        if (b.classList.contains('lang-' + lang)) {
+          b.style.display = 'inline';
+        } else {
+          b.style.display = 'none';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
