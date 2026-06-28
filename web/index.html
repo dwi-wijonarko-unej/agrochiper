@@ -1,314 +1,541 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" class="h-full">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AgroCipher – Adaptive Coffee Leaf Image Encryption</title>
-  <!-- Tailwind via CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: {
-              50:  '#f0fdf4',
-              100: '#dcfce7',
-              200: '#b9f8cf',
-              300: '#7bf1a8',
-              400: '#05df72',
-              500: '#00c950',
-              600: '#00a63e',
-              700: '#008236',
-              800: '#016630',
-              900: '#0d542b',
-            }
-          }
-        }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AgroCipher – Adaptive Coffee Leaf Image Encryption</title>
+    <!-- Tailwind via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                50: "#f0fdf4",
+                100: "#dcfce7",
+                200: "#b9f8cf",
+                300: "#7bf1a8",
+                400: "#05df72",
+                500: "#00c950",
+                600: "#00a63e",
+                700: "#008236",
+                800: "#016630",
+                900: "#0d542b",
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .lang-block {
+        display: none;
       }
-    }
-  </script>
-  <style>
-    .lang-block { display: none; }
-  </style>
-</head>
-<body class="min-h-full bg-primary-50 text-slate-900">
-  <div class="min-h-screen flex flex-col">
 
-    <!-- Header -->
-    <header class="border-b border-primary-200 bg-white/90 backdrop-blur">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-        <!-- Logo + title -->
-        <div class="flex items-center space-x-4">
-          <a href="https://unej.ac.id" target="_blank" rel="noopener noreferrer">
-            <img
-              src="https://unej.ac.id/wp-content/uploads/2026/02/header-logo-unej-2026.webp"
-              alt="Universitas Jember"
-              class="h-10 w-auto"
-            />
-          </a>
-          <div class="flex flex-col">
-            <span class="text-xs font-semibold text-primary-700 uppercase tracking-wide">
-              Universitas Jember – Penelitian Dosen Pemula - Keris Inteligent Platform Innovation
-            </span>
-            <span class="text-sm text-slate-600">
-              AI-driven Microservices for Adaptive Coffee Disease Image Encryption
-            </span>
+      /* Image lightbox (zoom on click) */
+      #lightbox {
+        display: none;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+      #lightbox.open {
+        display: flex;
+        opacity: 1;
+      }
+      #lightbox img {
+        transform: scale(0.96);
+        transition: transform 0.2s ease;
+      }
+      #lightbox.open img {
+        transform: scale(1);
+      }
+    </style>
+  </head>
+  <body class="min-h-full bg-primary-50 text-slate-900">
+    <div class="min-h-screen flex flex-col">
+      <!-- Header -->
+      <header class="border-b border-primary-200 bg-white/90 backdrop-blur">
+        <div
+          class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between"
+        >
+          <!-- Logo + title -->
+          <div class="flex items-center space-x-4">
+            <a
+              href="https://unej.ac.id"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="https://unej.ac.id/wp-content/uploads/2026/02/header-logo-unej-2026.webp"
+                alt="Universitas Jember"
+                class="h-10 w-auto"
+              />
+            </a>
+            <div class="flex flex-col">
+              <span
+                class="text-xs font-semibold text-primary-700 uppercase tracking-wide"
+              >
+                Universitas Jember – Penelitian Dosen Pemula - Keris Inteligent
+                Platform Innovation
+              </span>
+              <span class="text-sm text-slate-600">
+                AI-driven Microservices for Adaptive Coffee Disease Image
+                Encryption
+              </span>
+            </div>
+          </div>
+
+          <!-- Language toggle -->
+          <div class="flex items-center space-x-2 text-xs font-semibold">
+            <a
+              href="?lang=id"
+              class="px-2 py-1 rounded-md border border-primary-200 bg-primary-50 text-primary-800 hover:bg-primary-100"
+              >ID</a
+            >
+            <a
+              href="?lang=en"
+              class="px-2 py-1 rounded-md border border-primary-200 bg-white text-slate-700 hover:bg-primary-50"
+              >EN</a
+            >
           </div>
         </div>
+      </header>
 
-        <!-- Language toggle -->
-        <div class="flex items-center space-x-2 text-xs font-semibold">
-          <a href="?lang=id" class="px-2 py-1 rounded-md border border-primary-200 bg-primary-50 text-primary-800 hover:bg-primary-100">ID</a>
-          <a href="?lang=en" class="px-2 py-1 rounded-md border border-primary-200 bg-white text-slate-700 hover:bg-primary-50">EN</a>
-        </div>
-      </div>
-    </header>
-
-    <!-- Main -->
-    <main class="flex-1">
-      <!-- Hero section -->
-      <section class="bg-gradient-to-br from-primary-50 via-white to-primary-100">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
-          <div class="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
-
-            <!-- Left: text -->
-            <div class="w-full lg:w-1/2 space-y-6">
-              <!-- Badge -->
-              <p class="inline-flex items-center rounded-full bg-primary-100 px-3 py-1 text-xs font-semibold text-primary-800 uppercase tracking-wide">
-                <span class="lang-block lang-en">Research Prototype · TRL 3 Microservices</span>
-                <span class="lang-block lang-id">Purwarupa Riset · Arsitektur Microservices TKT 3</span>
-              </p>
-
-              <!-- Title -->
-              <h1 class="text-3xl sm:text-4xl lg:text-5xl font-semibold text-slate-900 leading-tight">
-                <span class="lang-block lang-en">
-                  AgroCipher:
-                  <span class="text-primary-700">AI Orchestrated</span> Hybrid
-                  Image Encryption for Coffee Leaf Disease
-                </span>
-                <span class="lang-block lang-id">
-                  AgroCipher:
-                  <span class="text-primary-700">Orkestrasi AI</span> untuk
-                  Enkripsi Citra Daun Kopi secara Adaptif
-                </span>
-              </h1>
-
-              <!-- Subtitle -->
-              <p class="text-sm sm:text-base text-slate-700 leading-relaxed">
-                <span class="lang-block lang-en">
-                  This homepage presents the research prototype of a microservices-based
-                  platform that orchestrates <span class="font-semibold">AI Selector</span> to choose
-                  the most suitable cipher (UHC, Blowfish, or Hybrid UHC–Blowfish) for
-                  coffee leaf images in an Agro-IoT ecosystem.
-                </span>
-                <span class="lang-block lang-id">
-                  Halaman ini menampilkan purwarupa riset platform berbasis microservices
-                  yang mengorkestrasi <span class="font-semibold">AI Selector</span> untuk memilih
-                  algoritma sandi paling sesuai (UHC, Blowfish, atau Hybrid UHC–Blowfish)
-                  bagi citra daun kopi dalam ekosistem Agro-IoT.
-                </span>
-              </p>
-
-              <!-- Bullet points -->
-              <ul class="text-sm text-slate-700 space-y-2">
-                <li class="flex items-start">
-                  <span class="mt-1 h-2 w-2 rounded-full bg-primary-500 mr-2"></span>
-                  <span class="lang-block lang-en">
-                    AI-driven decision tree selects the cipher based on entropy and GLCM texture metrics.
-                  </span>
-                  <span class="lang-block lang-id">
-                    Pohon keputusan berbasis AI memilih algoritma sandi berdasarkan nilai entropi dan metrik tekstur GLCM.
-                  </span>
-                </li>
-                <li class="flex items-start">
-                  <span class="mt-1 h-2 w-2 rounded-full bg-primary-500 mr-2"></span>
-                  <span class="lang-block lang-en">
-                    Microservices architecture: Gateway, Feature Extractor, AI Selector, and Encryption Service.
-                  </span>
-                  <span class="lang-block lang-id">
-                    Arsitektur microservices: Gateway, Layanan Ekstraksi Fitur, Layanan AI Selector, dan Layanan Enkripsi.
-                  </span>
-                </li>
-                <li class="flex items-start">
-                  <span class="mt-1 h-2 w-2 rounded-full bg-primary-500 mr-2"></span>
-                  <span class="lang-block lang-en">
-                    SQLite-based experiment logging captures runtimes, ciphertext entropy, and PSNR for analysis.
-                  </span>
-                  <span class="lang-block lang-id">
-                    Pencatatan eksperimen berbasis SQLite menyimpan waktu eksekusi, entropi ciphertext, dan PSNR untuk analisis.
-                  </span>
-                </li>
-              </ul>
-
-              <!-- Buttons -->
-              <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-4">
-                <a
-                  href="#demo"
-                  class="inline-flex items-center justify-center rounded-md bg-primary-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700"
+      <!-- Main -->
+      <main class="flex-1">
+        <!-- Hero section -->
+        <section
+          class="bg-gradient-to-br from-primary-50 via-white to-primary-100"
+        >
+          <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
+            <div
+              class="flex flex-col lg:flex-row items-center gap-10 lg:gap-16"
+            >
+              <!-- Left: text -->
+              <div class="w-full lg:w-1/2 space-y-6">
+                <!-- Badge -->
+                <p
+                  class="inline-flex items-center rounded-full bg-primary-100 px-3 py-1 text-xs font-semibold text-primary-800 uppercase tracking-wide"
                 >
-                  <span class="lang-block lang-en">View Demo Workflow</span>
-                  <span class="lang-block lang-id">Lihat Alur Demo</span>
-                </a>
-                <a
-                  href="#architecture"
-                  class="inline-flex items-center justify-center rounded-md border border-primary-200 bg-white px-5 py-2.5 text-sm font-semibold text-primary-800 hover:border-primary-300 hover:bg-primary-50"
+                  <span class="lang-block lang-en"
+                    >Research Prototype · TRL 3 Microservices</span
+                  >
+                  <span class="lang-block lang-id"
+                    >Purwarupa Riset · Arsitektur Microservices TKT 3</span
+                  >
+                </p>
+
+                <!-- Title -->
+                <h1
+                  class="text-3xl sm:text-4xl lg:text-5xl font-semibold text-slate-900 leading-tight"
                 >
-                  <span class="lang-block lang-en">System Architecture</span>
-                  <span class="lang-block lang-id">Arsitektur Sistem</span>
-                </a>
-              </div>
-            </div>
+                  <span class="lang-block lang-en">
+                    AgroCipher:
+                    <span class="text-primary-700">AI Orchestrated</span> Hybrid
+                    Image Encryption for Coffee Leaf Disease
+                  </span>
+                  <span class="lang-block lang-id">
+                    AgroCipher:
+                    <span class="text-primary-700">Orkestrasi AI</span> untuk
+                    Enkripsi Citra Daun Kopi secara Adaptif
+                  </span>
+                </h1>
 
-            <!-- Right: infrastructure illustration image -->
-            <div class="w-full lg:w-1/2">
-              <div class="relative">
-                <div class="absolute -top-6 -left-6 h-20 w-20 rounded-full bg-primary-100 blur-xl"></div>
-                <div class="absolute -bottom-6 -right-6 h-24 w-24 rounded-full bg-primary-200 blur-xl"></div>
+                <!-- Subtitle -->
+                <p class="text-sm sm:text-base text-slate-700 leading-relaxed">
+                  <span class="lang-block lang-en">
+                    This homepage presents the research prototype of a
+                    microservices-based platform that orchestrates
+                    <span class="font-semibold">AI Selector</span> to choose the
+                    most suitable cipher (UHC, Blowfish, or Hybrid UHC–Blowfish)
+                    for coffee leaf images in an Agro-IoT ecosystem.
+                  </span>
+                  <span class="lang-block lang-id">
+                    Halaman ini menampilkan purwarupa riset platform berbasis
+                    microservices yang mengorkestrasi
+                    <span class="font-semibold">AI Selector</span> untuk memilih
+                    algoritma sandi paling sesuai (UHC, Blowfish, atau Hybrid
+                    UHC–Blowfish) bagi citra daun kopi dalam ekosistem Agro-IoT.
+                  </span>
+                </p>
 
-                <div class="relative rounded-2xl border border-primary-100 bg-white shadow-sm shadow-primary-100/60 overflow-hidden">
-                  <img
-                    src="illustration.png"
-                    alt="AgroCipher system architecture illustration for adaptive coffee leaf image encryption"
-                    class="w-full h-full object-cover"
-                  />
+                <!-- Bullet points -->
+                <ul class="text-sm text-slate-700 space-y-2">
+                  <li class="flex items-start">
+                    <span
+                      class="mt-1 h-2 w-2 rounded-full bg-primary-500 mr-2"
+                    ></span>
+                    <span class="lang-block lang-en">
+                      AI-driven decision tree selects the cipher based on
+                      entropy and GLCM texture metrics.
+                    </span>
+                    <span class="lang-block lang-id">
+                      Pohon keputusan berbasis AI memilih algoritma sandi
+                      berdasarkan nilai entropi dan metrik tekstur GLCM.
+                    </span>
+                  </li>
+                  <li class="flex items-start">
+                    <span
+                      class="mt-1 h-2 w-2 rounded-full bg-primary-500 mr-2"
+                    ></span>
+                    <span class="lang-block lang-en">
+                      Microservices architecture: Gateway, Feature Extractor, AI
+                      Selector, and Encryption Service.
+                    </span>
+                    <span class="lang-block lang-id">
+                      Arsitektur microservices: Gateway, Layanan Ekstraksi
+                      Fitur, Layanan AI Selector, dan Layanan Enkripsi.
+                    </span>
+                  </li>
+                  <li class="flex items-start">
+                    <span
+                      class="mt-1 h-2 w-2 rounded-full bg-primary-500 mr-2"
+                    ></span>
+                    <span class="lang-block lang-en">
+                      SQLite-based experiment logging captures runtimes,
+                      ciphertext entropy, and PSNR for analysis.
+                    </span>
+                    <span class="lang-block lang-id">
+                      Pencatatan eksperimen berbasis SQLite menyimpan waktu
+                      eksekusi, entropi ciphertext, dan PSNR untuk analisis.
+                    </span>
+                  </li>
+                </ul>
+
+                <!-- Buttons -->
+                <div
+                  class="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-4"
+                >
+                  <a
+                    href="#demo"
+                    class="inline-flex items-center justify-center rounded-md bg-primary-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700"
+                  >
+                    <span class="lang-block lang-en">View Demo Workflow</span>
+                    <span class="lang-block lang-id">Lihat Alur Demo</span>
+                  </a>
+                  <a
+                    href="#architecture"
+                    class="inline-flex items-center justify-center rounded-md border border-primary-200 bg-white px-5 py-2.5 text-sm font-semibold text-primary-800 hover:border-primary-300 hover:bg-primary-50"
+                  >
+                    <span class="lang-block lang-en">System Architecture</span>
+                    <span class="lang-block lang-id">Arsitektur Sistem</span>
+                  </a>
                 </div>
               </div>
 
-              <p class="mt-4 text-[11px] text-slate-500 text-center lg:text-right">
-                <span class="lang-block lang-en">
-                  Illustration: AgroCipher system infrastructure with edge devices, AI-driven microservices,
-                  and secure hybrid image encryption.
-                </span>
-                <span class="lang-block lang-id">
-                  Ilustrasi: infrastruktur sistem AgroCipher dengan perangkat edge, microservices berbasis AI,
-                  dan enkripsi citra hybrid yang aman.
-                </span>
-              </p>
+              <!-- Right: infrastructure illustration image -->
+              <div class="w-full lg:w-1/2">
+                <div class="relative">
+                  <div
+                    class="absolute -top-6 -left-6 h-20 w-20 rounded-full bg-primary-100 blur-xl"
+                  ></div>
+                  <div
+                    class="absolute -bottom-6 -right-6 h-24 w-24 rounded-full bg-primary-200 blur-xl"
+                  ></div>
+
+                  <div
+                    class="relative rounded-2xl border border-primary-100 bg-white shadow-sm shadow-primary-100/60 overflow-hidden group"
+                  >
+                    <img
+                      id="illustrationImg"
+                      src="illustration.png"
+                      alt="AgroCipher system architecture illustration for adaptive coffee leaf image encryption"
+                      class="w-full h-full object-cover cursor-zoom-in transition-transform duration-200 group-hover:scale-[1.02]"
+                      role="button"
+                      tabindex="0"
+                      aria-label="Click to zoom illustration"
+                    />
+                    <span
+                      class="pointer-events-none absolute bottom-2 right-2 inline-flex items-center justify-center h-8 w-8 rounded-full bg-black/55 text-white backdrop-blur-sm"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6"
+                        />
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+
+                <p
+                  class="mt-4 text-[11px] text-slate-500 text-center lg:text-right"
+                >
+                  <span class="lang-block lang-en">
+                    Illustration: AgroCipher system infrastructure with edge
+                    devices, AI-driven microservices, and secure hybrid image
+                    encryption.
+                  </span>
+                  <span class="lang-block lang-id">
+                    Ilustrasi: infrastruktur sistem AgroCipher dengan perangkat
+                    edge, microservices berbasis AI, dan enkripsi citra hybrid
+                    yang aman.
+                  </span>
+                </p>
+              </div>
             </div>
           </div>
+        </section>
+
+        <!-- Overview -->
+        <section id="about" class="border-t border-primary-100 bg-white">
+          <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <h2
+              class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-en"
+            >
+              Research Overview
+            </h2>
+            <h2
+              class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-id"
+            >
+              Gambaran Umum Riset
+            </h2>
+
+            <p
+              class="text-sm text-slate-700 leading-relaxed lang-block lang-en"
+            >
+              This prototype implements a microservices architecture to
+              transform a monolithic Python-based hybrid cipher into
+              independent, containerized services. The design aligns with TRL 3
+              requirements, enabling dynamic AI-driven cipher selection,
+              experiment logging, and potential edge–cloud deployment in future
+              work.
+            </p>
+            <p
+              class="text-sm text-slate-700 leading-relaxed lang-block lang-id"
+            >
+              Purwarupa ini mengimplementasikan arsitektur microservices untuk
+              mentransformasikan algoritma hybrid berbasis Python yang semula
+              monolitik menjadi layanan mandiri dalam container. Desain ini
+              selaras dengan kebutuhan TKT 3, memungkinkan pemilihan sandi
+              adaptif berbasis AI, pencatatan eksperimen, dan potensi
+              pengembangan ke skenario edge–cloud.
+            </p>
+          </div>
+        </section>
+
+        <!-- Architecture -->
+        <section
+          id="architecture"
+          class="border-t border-primary-100 bg-primary-50"
+        >
+          <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <h2
+              class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-en"
+            >
+              System Architecture
+            </h2>
+            <h2
+              class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-id"
+            >
+              Arsitektur Sistem
+            </h2>
+
+            <p
+              class="text-sm text-slate-700 leading-relaxed lang-block lang-en"
+            >
+              The architecture decomposes the pipeline into four core services:
+              API Gateway &amp; Orchestrator, Feature Extractor Service, AI
+              Selector Service, and Encryption Service with decrypt-and-verify
+              routines and SQLite-based logging. This structure supports modular
+              deployment and clear separation of concerns.
+            </p>
+            <p
+              class="text-sm text-slate-700 leading-relaxed lang-block lang-id"
+            >
+              Arsitektur sistem memecah pipeline menjadi empat layanan inti: API
+              Gateway &amp; Orchestrator, Layanan Ekstraksi Fitur, Layanan AI
+              Selector, serta Layanan Enkripsi dengan rutin decrypt-and-verify
+              dan pencatatan berbasis SQLite. Struktur ini mendukung deployment
+              modular dan pemisahan tanggung jawab yang jelas.
+            </p>
+          </div>
+        </section>
+
+        <!-- Demo -->
+        <section id="demo" class="border-t border-primary-100 bg-white">
+          <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <h2
+              class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-en"
+            >
+              Demo &amp; Experiment
+            </h2>
+            <h2
+              class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-id"
+            >
+              Demo &amp; Eksperimen
+            </h2>
+
+            <p
+              class="text-sm text-slate-700 leading-relaxed lang-block lang-en"
+            >
+              In the current deployment, coffee leaf images are submitted via
+              the API Gateway, processed by the feature extractor and AI
+              selector, then encrypted using UHC, Blowfish, or Hybrid
+              UHC–Blowfish based on the image complexity. Experimental metrics
+              are recorded in SQLite for quantitative analysis.
+            </p>
+            <p
+              class="text-sm text-slate-700 leading-relaxed lang-block lang-id"
+            >
+              Pada deployment saat ini, citra daun kopi dikirim melalui API
+              Gateway, diproses oleh layanan ekstraksi fitur dan AI selector,
+              lalu dienkripsi menggunakan UHC, Blowfish, atau Hybrid
+              UHC–Blowfish bergantung pada kompleksitas citra. Metrik eksperimen
+              dicatat di SQLite untuk analisis kuantitatif.
+            </p>
+          </div>
+        </section>
+
+        <!-- Team -->
+        <section id="team" class="border-t border-primary-100 bg-primary-50">
+          <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <h2
+              class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-en"
+            >
+              Research Team
+            </h2>
+            <h2
+              class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-id"
+            >
+              Tim Peneliti
+            </h2>
+
+            <p
+              class="text-sm text-slate-700 leading-relaxed lang-block lang-en"
+            >
+              This system is developed as part of an Agro-IoT and cryptography
+              research initiative at Universitas Jember, integrating expertise
+              in image processing, AI, and secure microservices architecture.
+            </p>
+            <p
+              class="text-sm text-slate-700 leading-relaxed lang-block lang-id"
+            >
+              Sistem ini dikembangkan sebagai bagian dari inisiatif riset
+              Agro-IoT dan kriptografi di Universitas Jember, mengintegrasikan
+              keahlian pemrosesan citra, kecerdasan buatan, dan arsitektur
+              microservices yang aman.
+            </p>
+          </div>
+        </section>
+      </main>
+
+      <!-- Footer -->
+      <footer class="border-t border-primary-200 bg-white">
+        <div
+          class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2"
+        >
+          <p class="text-xs text-slate-500 lang-block lang-en">
+            © 2026 Universitas Jember · AgroCipher Microservices Prototype for
+            Adaptive Coffee Leaf Image Encryption.
+          </p>
+          <p class="text-xs text-slate-500 lang-block lang-id">
+            © 2026 Universitas Jember · Purwarupa Microservices AgroCipher untuk
+            Enkripsi Citra Penyakit Daun Kopi secara Adaptif.
+          </p>
+          <p class="text-xs text-slate-500">
+            Backend: Go + Python · Docker Compose · SQLite experiment logging.
+          </p>
         </div>
-      </section>
+      </footer>
+    </div>
 
-      <!-- Overview -->
-      <section id="about" class="border-t border-primary-100 bg-white">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h2 class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-en">Research Overview</h2>
-          <h2 class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-id">Gambaran Umum Riset</h2>
+    <!-- Image lightbox (zoom on click) -->
+    <div
+      id="lightbox"
+      class="fixed inset-0 z-50 items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+    >
+      <button
+        type="button"
+        id="lightboxClose"
+        class="absolute top-4 right-4 inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/90 text-slate-700 shadow hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
+        aria-label="Close zoom"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+      <img
+        id="lightboxImage"
+        src=""
+        alt=""
+        class="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
+      />
+    </div>
 
-          <p class="text-sm text-slate-700 leading-relaxed lang-block lang-en">
-            This prototype implements a microservices architecture to transform a
-            monolithic Python-based hybrid cipher into independent, containerized
-            services. The design aligns with TRL 3 requirements, enabling dynamic
-            AI-driven cipher selection, experiment logging, and potential edge–cloud
-            deployment in future work.
-          </p>
-          <p class="text-sm text-slate-700 leading-relaxed lang-block lang-id">
-            Purwarupa ini mengimplementasikan arsitektur microservices untuk
-            mentransformasikan algoritma hybrid berbasis Python yang semula
-            monolitik menjadi layanan mandiri dalam container. Desain ini selaras
-            dengan kebutuhan TKT 3, memungkinkan pemilihan sandi adaptif berbasis AI,
-            pencatatan eksperimen, dan potensi pengembangan ke skenario edge–cloud.
-          </p>
-        </div>
-      </section>
+    <script>
+      (function () {
+        var trigger = document.getElementById("illustrationImg");
+        var lightbox = document.getElementById("lightbox");
+        var lightboxImg = document.getElementById("lightboxImage");
+        var closeBtn = document.getElementById("lightboxClose");
+        if (!trigger || !lightbox) return;
 
-      <!-- Architecture -->
-      <section id="architecture" class="border-t border-primary-100 bg-primary-50">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h2 class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-en">System Architecture</h2>
-          <h2 class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-id">Arsitektur Sistem</h2>
-
-          <p class="text-sm text-slate-700 leading-relaxed lang-block lang-en">
-            The architecture decomposes the pipeline into four core services:
-            API Gateway &amp; Orchestrator, Feature Extractor Service, AI Selector Service,
-            and Encryption Service with decrypt-and-verify routines and SQLite-based logging.
-            This structure supports modular deployment and clear separation of concerns.
-          </p>
-          <p class="text-sm text-slate-700 leading-relaxed lang-block lang-id">
-            Arsitektur sistem memecah pipeline menjadi empat layanan inti:
-            API Gateway &amp; Orchestrator, Layanan Ekstraksi Fitur, Layanan AI Selector,
-            serta Layanan Enkripsi dengan rutin decrypt-and-verify dan pencatatan
-            berbasis SQLite. Struktur ini mendukung deployment modular dan pemisahan
-            tanggung jawab yang jelas.
-          </p>
-        </div>
-      </section>
-
-      <!-- Demo -->
-      <section id="demo" class="border-t border-primary-100 bg-white">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h2 class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-en">Demo &amp; Experiment</h2>
-          <h2 class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-id">Demo &amp; Eksperimen</h2>
-
-          <p class="text-sm text-slate-700 leading-relaxed lang-block lang-en">
-            In the current deployment, coffee leaf images are submitted via the
-            API Gateway, processed by the feature extractor and AI selector, then
-            encrypted using UHC, Blowfish, or Hybrid UHC–Blowfish based on the
-            image complexity. Experimental metrics are recorded in SQLite for
-            quantitative analysis.
-          </p>
-          <p class="text-sm text-slate-700 leading-relaxed lang-block lang-id">
-            Pada deployment saat ini, citra daun kopi dikirim melalui API Gateway,
-            diproses oleh layanan ekstraksi fitur dan AI selector, lalu dienkripsi
-            menggunakan UHC, Blowfish, atau Hybrid UHC–Blowfish bergantung pada
-            kompleksitas citra. Metrik eksperimen dicatat di SQLite untuk analisis
-            kuantitatif.
-          </p>
-        </div>
-      </section>
-
-      <!-- Team -->
-      <section id="team" class="border-t border-primary-100 bg-primary-50">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h2 class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-en">Research Team</h2>
-          <h2 class="text-lg font-semibold text-slate-900 mb-2 lang-block lang-id">Tim Peneliti</h2>
-
-          <p class="text-sm text-slate-700 leading-relaxed lang-block lang-en">
-            This system is developed as part of an Agro-IoT and cryptography
-            research initiative at Universitas Jember, integrating expertise
-            in image processing, AI, and secure microservices architecture.
-          </p>
-          <p class="text-sm text-slate-700 leading-relaxed lang-block lang-id">
-            Sistem ini dikembangkan sebagai bagian dari inisiatif riset Agro-IoT
-            dan kriptografi di Universitas Jember, mengintegrasikan keahlian
-            pemrosesan citra, kecerdasan buatan, dan arsitektur microservices
-            yang aman.
-          </p>
-        </div>
-      </section>
-    </main>
-
-    <!-- Footer -->
-    <footer class="border-t border-primary-200 bg-white">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-        <p class="text-xs text-slate-500 lang-block lang-en">
-          © 2026 Universitas Jember · AgroCipher Microservices Prototype for Adaptive Coffee Leaf Image Encryption.
-        </p>
-        <p class="text-xs text-slate-500 lang-block lang-id">
-          © 2026 Universitas Jember · Purwarupa Microservices AgroCipher untuk Enkripsi Citra Penyakit Daun Kopi secara Adaptif.
-        </p>
-        <p class="text-xs text-slate-500">
-          Backend: Go + Python · Docker Compose · SQLite experiment logging.
-        </p>
-      </div>
-    </footer>
-  </div>
-
-  <!-- Lang switch -->
-  <script>
-    (function () {
-      const params = new URLSearchParams(window.location.search);
-      const lang = (params.get('lang') || 'en').toLowerCase();
-      const blocks = document.querySelectorAll('.lang-block');
-      blocks.forEach(b => {
-        if (b.classList.contains('lang-' + lang)) {
-          b.style.display = 'inline';
-        } else {
-          b.style.display = 'none';
+        function open() {
+          lightboxImg.src = trigger.src;
+          lightboxImg.alt = trigger.alt;
+          lightbox.classList.add("open");
+          document.body.style.overflow = "hidden";
+          if (closeBtn) closeBtn.focus();
         }
-      });
-    })();
-  </script>
-</body>
+        function close() {
+          lightbox.classList.remove("open");
+          document.body.style.overflow = "";
+          trigger.focus();
+        }
+
+        trigger.addEventListener("click", open);
+        trigger.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            open();
+          }
+        });
+        if (closeBtn) closeBtn.addEventListener("click", close);
+        lightbox.addEventListener("click", function (e) {
+          if (e.target === lightbox) close();
+        });
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape" && lightbox.classList.contains("open"))
+            close();
+        });
+      })();
+    </script>
+
+    <!-- Lang switch -->
+    <script>
+      (function () {
+        const params = new URLSearchParams(window.location.search);
+        const lang = (params.get("lang") || "en").toLowerCase();
+        const blocks = document.querySelectorAll(".lang-block");
+        blocks.forEach((b) => {
+          if (b.classList.contains("lang-" + lang)) {
+            b.style.display = "inline";
+          } else {
+            b.style.display = "none";
+          }
+        });
+      })();
+    </script>
+  </body>
 </html>
