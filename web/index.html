@@ -57,7 +57,7 @@
           </div>
         </div>
 
-        <!-- Language toggle (for convenience) -->
+        <!-- Language toggle -->
         <div class="flex items-center space-x-2 text-xs font-semibold">
           <a href="?lang=id" class="px-2 py-1 rounded-md border border-primary-200 bg-primary-50 text-primary-800 hover:bg-primary-100">ID</a>
           <a href="?lang=en" class="px-2 py-1 rounded-md border border-primary-200 bg-white text-slate-700 hover:bg-primary-50">EN</a>
@@ -160,134 +160,29 @@
               </div>
             </div>
 
-            <!-- Right: illustration box -->
+            <!-- Right: infrastructure illustration image -->
             <div class="w-full lg:w-1/2">
               <div class="relative">
                 <div class="absolute -top-6 -left-6 h-20 w-20 rounded-full bg-primary-100 blur-xl"></div>
                 <div class="absolute -bottom-6 -right-6 h-24 w-24 rounded-full bg-primary-200 blur-xl"></div>
 
-                <div class="relative rounded-2xl border border-primary-100 bg-white shadow-sm shadow-primary-100/60 p-5">
-                  <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center space-x-2">
-                      <div class="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
-                        <span class="text-xs font-bold text-primary-700">AI</span>
-                      </div>
-                      <div>
-                        <p class="text-xs font-semibold text-slate-800 lang-block lang-en">
-                          AI Selector Decision Flow
-                        </p>
-                        <p class="text-xs font-semibold text-slate-800 lang-block lang-id">
-                          Alur Keputusan AI Selector
-                        </p>
-                        <p class="text-[11px] text-slate-500 lang-block lang-en">
-                          Entropy &amp; GLCM → Cipher choice
-                        </p>
-                        <p class="text-[11px] text-slate-500 lang-block lang-id">
-                          Entropi &amp; GLCM → Pemilihan algoritma sandi
-                        </p>
-                      </div>
-                    </div>
-                    <span class="inline-flex items-center rounded-full bg-primary-50 px-2 py-1 text-[11px] font-semibold text-primary-700">
-                      UHC · Blowfish · Hybrid
-                    </span>
-                  </div>
-
-                  <!-- Mini diagram -->
-                  <div class="space-y-4 text-xs text-slate-700">
-                    <div class="flex items-center">
-                      <div class="flex-1">
-                        <p class="font-semibold text-slate-800 lang-block lang-en">Edge Device</p>
-                        <p class="font-semibold text-slate-800 lang-block lang-id">Perangkat Edge</p>
-                        <p class="text-[11px] text-slate-500 lang-block lang-en">
-                          Coffee leaf image upload (HTTPS)
-                        </p>
-                        <p class="text-[11px] text-slate-500 lang-block lang-id">
-                          Unggah citra daun kopi (HTTPS)
-                        </p>
-                      </div>
-                      <div class="flex items-center text-primary-600 text-[11px] font-semibold">
-                        <span class="mr-1">→</span>
-                        <span class="lang-block lang-en">API Gateway</span>
-                        <span class="lang-block lang-id">API Gateway</span>
-                      </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      <div class="rounded-md border border-primary-100 bg-primary-50 p-2">
-                        <p class="font-semibold text-[11px] text-primary-800 lang-block lang-en">
-                          Feature Extractor
-                        </p>
-                        <p class="font-semibold text-[11px] text-primary-800 lang-block lang-id">
-                          Layanan Ekstraksi Fitur
-                        </p>
-                        <p class="text-[11px] text-slate-600 lang-block lang-en">
-                          Entropy + GLCM texture metrics
-                        </p>
-                        <p class="text-[11px] text-slate-600 lang-block lang-id">
-                          Entropi + metrik tekstur GLCM
-                        </p>
-                      </div>
-                      <div class="rounded-md border border-primary-100 bg-primary-50 p-2">
-                        <p class="font-semibold text-[11px] text-primary-800 lang-block lang-en">
-                          AI Selector
-                        </p>
-                        <p class="font-semibold text-[11px] text-primary-800 lang-block lang-id">
-                          Layanan AI Selector
-                        </p>
-                        <p class="text-[11px] text-slate-600 lang-block lang-en">
-                          Decision Tree · UHC / Blowfish / Hybrid
-                        </p>
-                        <p class="text-[11px] text-slate-600 lang-block lang-id">
-                          Pohon keputusan · UHC / Blowfish / Hybrid
-                        </p>
-                      </div>
-                      <div class="rounded-md border border-primary-100 bg-primary-50 p-2">
-                        <p class="font-semibold text-[11px] text-primary-800 lang-block lang-en">
-                          Encryption Service
-                        </p>
-                        <p class="font-semibold text-[11px] text-primary-800 lang-block lang-id">
-                          Layanan Enkripsi
-                        </p>
-                        <p class="text-[11px] text-slate-600 lang-block lang-en">
-                          Hybrid UHC–Blowfish<br />Encrypt &amp; decrypt-verify
-                        </p>
-                        <p class="text-[11px] text-slate-600 lang-block lang-id">
-                          Hybrid UHC–Blowfish<br />Enkripsi &amp; verifikasi dekripsi
-                        </p>
-                      </div>
-                    </div>
-
-                    <div class="flex items-center justify-between border-t border-primary-100 pt-3">
-                      <div>
-                        <p class="font-semibold text-[11px] text-slate-800 lang-block lang-en">
-                          Experiment Logging
-                        </p>
-                        <p class="font-semibold text-[11px] text-slate-800 lang-block lang-id">
-                          Pencatatan Eksperimen
-                        </p>
-                        <p class="text-[11px] text-slate-500 lang-block lang-en">
-                          SQLite · filename · method · runtimes · cipher entropy · PSNR
-                        </p>
-                        <p class="text-[11px] text-slate-500 lang-block lang-id">
-                          SQLite · nama berkas · metode · waktu · entropi cipher · PSNR
-                        </p>
-                      </div>
-                      <div class="rounded-md bg-primary-50 px-3 py-1 text-[11px] font-semibold text-primary-700">
-                        TRL 3 · Microservices
-                      </div>
-                    </div>
-                  </div>
+                <div class="relative rounded-2xl border border-primary-100 bg-white shadow-sm shadow-primary-100/60 overflow-hidden">
+                  <img
+                    src="illustration.png"
+                    alt="AgroCipher system architecture illustration for adaptive coffee leaf image encryption"
+                    class="w-full h-full object-cover"
+                  />
                 </div>
               </div>
 
               <p class="mt-4 text-[11px] text-slate-500 text-center lg:text-right">
                 <span class="lang-block lang-en">
-                  Illustration: conceptual flow of the AI-driven microservices architecture
-                  for adaptive coffee leaf image encryption.
+                  Illustration: AgroCipher system infrastructure with edge devices, AI-driven microservices,
+                  and secure hybrid image encryption.
                 </span>
                 <span class="lang-block lang-id">
-                  Ilustrasi: alur konseptual arsitektur microservices berbasis AI
-                  untuk enkripsi citra daun kopi secara adaptif.
+                  Ilustrasi: infrastruktur sistem AgroCipher dengan perangkat edge, microservices berbasis AI,
+                  dan enkripsi citra hybrid yang aman.
                 </span>
               </p>
             </div>
@@ -400,7 +295,7 @@
     </footer>
   </div>
 
-  <!-- Simple lang switch based on URL parameter ?lang=id or ?lang=en -->
+  <!-- Lang switch -->
   <script>
     (function () {
       const params = new URLSearchParams(window.location.search);
