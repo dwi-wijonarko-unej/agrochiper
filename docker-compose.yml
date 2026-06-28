@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  gateway:
+    build: ./gateway
+    container_name: coffee-gateway
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      FEATURE_SERVICE_URL: http://feature-service:8081
+      SELECTOR_SERVICE_URL: http://selector-service:8082
+      ENCRYPTION_SERVICE_URL: http://encryption-service:8083
+    depends_on:
+      - feature-service
+      - selector-service
+      - encryption-service
+    restart: unless-stopped
+
+  feature-service:
+    build: ./feature-service
+    container_name: coffee-feature-service
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+
+  selector-service:
+    build: ./selector-service
+    container_name: coffee-selector-service
+    ports:
+      - "8082:8082"
+    restart: unless-stopped
+
+  encryption-service:
+    build: ./encryption-service
+    container_name: coffee-encryption-service
+    ports:
+      - "8083:8083"
+    env_file:
+      - .env
+    volumes:
+      - ./data/encryption:/data
+    restart: unless-stopped
