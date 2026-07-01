@@ -135,7 +135,13 @@
         fetchBtn.textContent = "Loading...";
 
         try {
-          const res = await fetch("/api/v1/logs");
+          // Construct URL dynamically to support running on a VPS (use the same hostname, but Gateway's port 8080)
+          const apiUrl =
+            window.location.protocol +
+            "//" +
+            window.location.hostname +
+            ":8080/api/v1/logs";
+          const res = await fetch(apiUrl);
 
           if (!res.ok) {
             throw new Error(`API Error: ${res.status} ${res.statusText}`);
