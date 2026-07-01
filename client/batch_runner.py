@@ -4,16 +4,12 @@ batch_runner.py — AgroCipher batch encryption client.
 Usage:
     python batch_runner.py <folder_dataset> [api_url] [output_csv]
 
-Environment variable:
-    AGROCIPHER_API_KEY   API key for the gateway (required).
-                         Can also be passed via --api-key flag (see extended usage).
-
-Examples:
-    python batch_runner.py ./dataset
-    python batch_runner.py ./dataset http://localhost:8080/api/v1/encrypt-image results.csv
-
 API key dibaca otomatis dari file .env di folder project (GATEWAY_API_KEY).
 Bisa juga di-override dengan env var: AGROCIPHER_API_KEY=mykey python batch_runner.py ./dataset
+
+Examples:
+    python batch_runner.py ./dataset-daun-kopi
+    python batch_runner.py ./dataset http://localhost:8080/api/v1/encrypt-image results.csv
 """
 
 import csv
@@ -35,12 +31,52 @@ RETRY_COUNT = 3  # max attempts per image
 RETRY_DELAY_S = 2.0  # seconds to wait between retries
 FLUSH_EVERY = 10  # flush CSV to disk every N rows
 
-# Lokasi default file .env: dua level di atas client/ → root project
-_DEFAULT_ENV_PATHS = [
-    Path(__file__).parent.parent / ".env",  # ../  (project root)
-    Path(__file__).parent / ".env",  # ./   (folder client itu sendiri)
-    Path("/opt/research/agrochiper/.env"),  # path absolut VPS
-]
+
+# ---------------------------------------------------------------------------
+# .env reader
+# ---------------------------------------------------------------------------
+
+
+def load_env_file() -> tuple:
+    """
+    Cari dan baca file .env, kembalikan (path_yang_dibaca, dict_nilai).
+    Kandidat dicek berurutan, file pertama yang ada yang dipakai.
+    Nilai inline komentar (# ...) diabaikan.
+    """
+    script_dir = Path(__file__).resolve().parent
+    candidates = [
+        script_dir.parent / ".env",  # root project  (client/../.env)
+        script_dir / ".env",  # folder client
+        Path("/opt/research/agrochiper/.env"),  # path absolut VPS
+        Path.home() / "agrochiper" / ".env",  # ~/agrochiper/.env
+    ]
+
+    for env_path in candidates:
+        if not env_path.exists():
+            continue
+        result: Dict[str, str] = {}
+        with open(env_path, encoding="utf-8") as f:
+            for line in f:
+                # Hapus trailing newline/whitespace dulu
+                line = line.rstrip("\r\n")
+                # Hapus inline komentar (# ...) — tapi hanya di luar tanda kutip
+                if " #" in line:
+                    line = line[: line.index(" #")]
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, _, val = line.partition("=")
+                key = key.strip()
+                # Hapus kutip pembungkus jika ada
+                val = val.strip()
+                if (val.startswith('"') and val.endswith('"')) or (
+                    val.startswith("'") and val.endswith("'")
+                ):
+                    val = val[1:-1]
+                result[key] = val
+        return env_path, result
+
+    return None, {}
 
 
 # ---------------------------------------------------------------------------
@@ -74,32 +110,6 @@ def load_done_set(output_csv: str, rel_path_col: str = "relative_path") -> Set[s
     return done
 
 
-def load_env_file(extra_path: Optional[str] = None) -> Dict[str, str]:
-    """
-    Baca file .env secara manual (tanpa dependensi python-dotenv).
-    Kembalikan dict {KEY: VALUE}. Baris kosong dan komentar (#) diabaikan.
-    Mendukung format:  KEY=value  dan  KEY="value".
-    """
-    candidates = list(_DEFAULT_ENV_PATHS)
-    if extra_path:
-        candidates.insert(0, Path(extra_path))
-
-    for env_path in candidates:
-        if env_path.exists():
-            result: Dict[str, str] = {}
-            with open(env_path, encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if not line or line.startswith("#") or "=" not in line:
-                        continue
-                    key, _, val = line.partition("=")
-                    key = key.strip()
-                    val = val.strip().strip('"').strip("'")
-                    result[key] = val
-            return result
-    return {}
-
-
 def mime_for(path: str) -> str:
     """Deteksi MIME type yang benar berdasarkan ekstensi file."""
     mime, _ = mimetypes.guess_type(path)
@@ -107,17 +117,12 @@ def mime_for(path: str) -> str:
 
 
 def send_image(api_url: str, image_path: str, api_key: str) -> Dict:
-    """
-    Kirim satu gambar ke API gateway dengan API Key auth.
-    Melempar exception jika respons bukan 2xx.
-    """
+    """Kirim satu gambar ke API gateway dengan API Key auth."""
     headers = {"X-API-Key": api_key}
     mime = mime_for(image_path)
-
     with open(image_path, "rb") as f:
         files = {"file": (os.path.basename(image_path), f, mime)}
         resp = requests.post(api_url, files=files, headers=headers, timeout=60)
-
     resp.raise_for_status()
     return resp.json()
 
@@ -131,17 +136,15 @@ def send_with_retry(
 ) -> Dict:
     """
     Coba kirim gambar hingga `retries` kali.
-    Berhenti segera pada error 4xx (client error, tidak ada gunanya retry).
-    Retry hanya pada error jaringan / 5xx.
+    Langsung gagal pada 4xx (misal 401) — retry tidak akan membantu.
     """
     last_exc: Optional[Exception] = None
     for attempt in range(1, retries + 1):
         try:
             return send_image(api_url, image_path, api_key)
         except requests.HTTPError as e:
-            # 4xx = client error (misal 401 Unauthorized) → langsung gagal
             if e.response is not None and e.response.status_code < 500:
-                raise
+                raise  # 4xx → jangan retry
             last_exc = e
         except (requests.ConnectionError, requests.Timeout) as e:
             last_exc = e
@@ -167,20 +170,33 @@ def main() -> None:
     api_url = sys.argv[2] if len(sys.argv) >= 3 else API_URL_DEFAULT
     output_csv = sys.argv[3] if len(sys.argv) >= 4 else "results_batch.csv"
 
-    # --- API key: coba env var dulu, fallback ke .env ---
+    # --- Baca API key ---
+    # Prioritas 1: env var shell (AGROCIPHER_API_KEY)
     api_key = os.environ.get("AGROCIPHER_API_KEY", "").strip()
+    key_src = "env var AGROCIPHER_API_KEY"
+
+    # Prioritas 2: GATEWAY_API_KEY dari file .env
     if not api_key:
-        env_vars = load_env_file()
+        env_path, env_vars = load_env_file()
         api_key = env_vars.get("GATEWAY_API_KEY", "").strip()
+        key_src = str(env_path) if env_path else "tidak ditemukan"
 
     if not api_key:
         print("ERROR: API key tidak ditemukan.")
-        print("       Pastikan file .env di root project memiliki baris:")
-        print("         GATEWAY_API_KEY=<kunci-anda>")
-        print("       Atau set env var: export AGROCIPHER_API_KEY=<kunci-anda>")
+        print("  Pastikan file .env di root project memiliki baris:")
+        print("    GATEWAY_API_KEY=<kunci-anda>")
         sys.exit(1)
 
-    print(f"API key         : {'*' * (len(api_key) - 6)}{api_key[-6:]}  (dari .env)")
+    # Tampilkan panjang kunci dan 8 karakter terakhir untuk verifikasi
+    print(f"API key source  : {key_src}")
+    print(
+        f"API key (len={len(api_key)}): {'*' * max(0, len(api_key) - 8)}{api_key[-8:]}"
+    )
+
+    if len(api_key) != 64:
+        print(
+            f"WARNING: Panjang kunci {len(api_key)} karakter, seharusnya 64. Periksa file .env!"
+        )
 
     if not os.path.isdir(dataset_folder):
         print(f"ERROR: Folder '{dataset_folder}' tidak ditemukan.")
@@ -207,7 +223,7 @@ def main() -> None:
     print(f"Akan diproses   : {len(pending)} gambar\n")
 
     if not pending:
-        print("Semua gambar sudah diproses sebelumnya. Tidak ada yang perlu diulang.")
+        print("Semua gambar sudah diproses. Tidak ada yang perlu diulang.")
         sys.exit(0)
 
     fieldnames = [
@@ -227,7 +243,6 @@ def main() -> None:
         "error",
     ]
 
-    # Append jika resume, overwrite jika baru
     csv_mode = "a" if resume_mode else "w"
     with open(output_csv, mode=csv_mode, newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -291,12 +306,10 @@ def main() -> None:
                 total_err += 1
                 print(f"[{idx:4d}/{total_all}] {rel_name:<50} -> ERROR: {e}")
 
-            # Flush ke disk secara berkala agar data aman jika proses tiba-tiba berhenti
             if idx % FLUSH_EVERY == 0:
                 csvfile.flush()
                 os.fsync(csvfile.fileno())
 
-        # Final flush
         csvfile.flush()
 
     end_all = time.perf_counter()
