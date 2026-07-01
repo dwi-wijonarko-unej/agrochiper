@@ -9,8 +9,11 @@ Environment variable:
                          Can also be passed via --api-key flag (see extended usage).
 
 Examples:
-    AGROCIPHER_API_KEY=mykey python batch_runner.py ./dataset
-    AGROCIPHER_API_KEY=mykey python batch_runner.py ./dataset http://localhost:8080/api/v1/encrypt-image results.csv
+    python batch_runner.py ./dataset
+    python batch_runner.py ./dataset http://localhost:8080/api/v1/encrypt-image results.csv
+
+API key dibaca otomatis dari file .env di folder project (GATEWAY_API_KEY).
+Bisa juga di-override dengan env var: AGROCIPHER_API_KEY=mykey python batch_runner.py ./dataset
 """
 
 import csv
@@ -18,6 +21,7 @@ import mimetypes
 import os
 import sys
 import time
+from pathlib import Path
 from typing import Dict, List, Optional, Set
 
 import requests
@@ -30,6 +34,13 @@ IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png")
 RETRY_COUNT = 3  # max attempts per image
 RETRY_DELAY_S = 2.0  # seconds to wait between retries
 FLUSH_EVERY = 10  # flush CSV to disk every N rows
+
+# Lokasi default file .env: dua level di atas client/ → root project
+_DEFAULT_ENV_PATHS = [
+    Path(__file__).parent.parent / ".env",  # ../  (project root)
+    Path(__file__).parent / ".env",  # ./   (folder client itu sendiri)
+    Path("/opt/research/agrochiper/.env"),  # path absolut VPS
+]
 
 
 # ---------------------------------------------------------------------------
@@ -61,6 +72,32 @@ def load_done_set(output_csv: str, rel_path_col: str = "relative_path") -> Set[s
             if row.get("error", "").strip() == "":
                 done.add(row.get(rel_path_col, ""))
     return done
+
+
+def load_env_file(extra_path: Optional[str] = None) -> Dict[str, str]:
+    """
+    Baca file .env secara manual (tanpa dependensi python-dotenv).
+    Kembalikan dict {KEY: VALUE}. Baris kosong dan komentar (#) diabaikan.
+    Mendukung format:  KEY=value  dan  KEY="value".
+    """
+    candidates = list(_DEFAULT_ENV_PATHS)
+    if extra_path:
+        candidates.insert(0, Path(extra_path))
+
+    for env_path in candidates:
+        if env_path.exists():
+            result: Dict[str, str] = {}
+            with open(env_path, encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#") or "=" not in line:
+                        continue
+                    key, _, val = line.partition("=")
+                    key = key.strip()
+                    val = val.strip().strip('"').strip("'")
+                    result[key] = val
+            return result
+    return {}
 
 
 def mime_for(path: str) -> str:
@@ -130,12 +167,20 @@ def main() -> None:
     api_url = sys.argv[2] if len(sys.argv) >= 3 else API_URL_DEFAULT
     output_csv = sys.argv[3] if len(sys.argv) >= 4 else "results_batch.csv"
 
-    # --- API key: env var wajib ada ---
+    # --- API key: coba env var dulu, fallback ke .env ---
     api_key = os.environ.get("AGROCIPHER_API_KEY", "").strip()
     if not api_key:
-        print("ERROR: Environment variable AGROCIPHER_API_KEY belum di-set.")
-        print("       Contoh: export AGROCIPHER_API_KEY=<kunci-anda>")
+        env_vars = load_env_file()
+        api_key = env_vars.get("GATEWAY_API_KEY", "").strip()
+
+    if not api_key:
+        print("ERROR: API key tidak ditemukan.")
+        print("       Pastikan file .env di root project memiliki baris:")
+        print("         GATEWAY_API_KEY=<kunci-anda>")
+        print("       Atau set env var: export AGROCIPHER_API_KEY=<kunci-anda>")
         sys.exit(1)
+
+    print(f"API key         : {'*' * (len(api_key) - 6)}{api_key[-6:]}  (dari .env)")
 
     if not os.path.isdir(dataset_folder):
         print(f"ERROR: Folder '{dataset_folder}' tidak ditemukan.")
