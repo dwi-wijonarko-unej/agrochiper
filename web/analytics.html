@@ -1,176 +1,350 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="h-full">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AgroCipher Analytics</title>
+    <title>AgroCipher – Experiment Analytics</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                50: "#f0fdf4",
+                100: "#dcfce7",
+                200: "#b9f8cf",
+                300: "#7bf1a8",
+                400: "#05df72",
+                500: "#00c950",
+                600: "#00a63e",
+                700: "#008236",
+                800: "#016630",
+                900: "#0d542b",
+              },
+            },
+          },
+        },
+      };
+    </script>
   </head>
-  <body class="bg-slate-50 text-slate-800 p-4 sm:p-6">
-    <div class="max-w-6xl mx-auto space-y-5">
-      <!-- Header -->
-      <header
-        class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 border-b border-slate-200 pb-4"
-      >
-        <div>
-          <h1 class="text-xl font-bold text-slate-900">
-            AgroCipher Experiment Summary
-          </h1>
-          <p class="text-sm text-slate-500">
-            Ringkasan kuantitatif untuk manuskrip artikel ilmiah
-          </p>
-        </div>
-        <div class="flex items-center gap-2">
-          <button
-            id="fetchBtn"
-            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-1.5 px-4 rounded shadow"
-          >
-            Refresh
-          </button>
-          <button
-            id="exportCsv"
-            class="text-xs bg-slate-800 text-white px-3 py-1.5 rounded hover:bg-slate-700"
-          >
-            Export CSV
-          </button>
-          <a href="/" class="text-sm text-blue-600 hover:underline">Back</a>
+  <body class="min-h-full bg-primary-50 text-slate-900">
+    <div class="min-h-screen flex flex-col">
+      <!-- Header (identical to index.html) -->
+      <header class="border-b border-primary-200 bg-white/90 backdrop-blur">
+        <div
+          class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between"
+        >
+          <!-- Logo + title -->
+          <div class="flex items-center space-x-4">
+            <a
+              href="https://unej.ac.id"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="https://unej.ac.id/wp-content/uploads/2026/02/header-logo-unej-2026.webp"
+                alt="Universitas Jember"
+                class="h-10 w-auto"
+              />
+            </a>
+            <div class="flex flex-col">
+              <span
+                class="text-xs font-semibold text-primary-700 uppercase tracking-wide"
+              >
+                Universitas Jember – Penelitian Dosen Pemula - Keris Inteligent
+                Platform Innovation
+              </span>
+              <span class="text-sm text-slate-600">
+                AI-driven Microservices for Adaptive Coffee Disease Image
+                Encryption
+              </span>
+            </div>
+          </div>
+          <!-- Nav -->
+          <div class="flex items-center space-x-3 text-xs font-semibold">
+            <a
+              href="/"
+              class="text-primary-700 hover:text-primary-900 underline decoration-primary-300 underline-offset-2 whitespace-nowrap"
+              >&#8592; Back to Home</a
+            >
+            <div
+              class="flex items-center space-x-1 border-l border-primary-200 pl-3"
+            >
+              <button
+                id="fetchBtn"
+                class="px-3 py-1 rounded-md bg-primary-700 text-white hover:bg-primary-800 font-semibold"
+              >
+                Refresh
+              </button>
+              <button
+                id="exportCsv"
+                class="px-3 py-1 rounded-md border border-primary-200 bg-white text-primary-800 hover:bg-primary-50"
+              >
+                Export CSV
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
-      <!-- Error -->
-      <div
-        id="errorMsg"
-        class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-sm"
-      ></div>
+      <!-- Main -->
+      <main class="flex-1">
+        <!-- Page title bar -->
+        <section
+          class="bg-gradient-to-br from-primary-50 via-white to-primary-100 border-b border-primary-100"
+        >
+          <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <h1 class="text-2xl font-semibold text-slate-900">
+              Experiment Analytics
+            </h1>
+            <p class="text-sm text-slate-600 mt-1">
+              Ringkasan kuantitatif hasil eksperimen untuk manuskrip artikel
+              ilmiah.
+            </p>
+            <div
+              id="errorMsg"
+              class="hidden mt-3 bg-red-100 border border-red-300 text-red-700 px-4 py-2 rounded text-sm"
+            ></div>
+          </div>
+        </section>
 
-      <!-- KPI Cards -->
-      <section class="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <div class="bg-white border border-slate-200 rounded-lg p-3">
-          <p class="text-xs text-slate-500">Total eksperimen</p>
-          <p id="kpiTotal" class="text-2xl font-bold text-slate-900">-</p>
-        </div>
-        <div class="bg-white border border-slate-200 rounded-lg p-3">
-          <p class="text-xs text-slate-500">Rata-rata enc (s)</p>
-          <p id="kpiEnc" class="text-2xl font-bold text-slate-900">-</p>
-        </div>
-        <div class="bg-white border border-slate-200 rounded-lg p-3">
-          <p class="text-xs text-slate-500">Rata-rata dec (s)</p>
-          <p id="kpiDec" class="text-2xl font-bold text-slate-900">-</p>
-        </div>
-        <div class="bg-white border border-slate-200 rounded-lg p-3">
-          <p class="text-xs text-slate-500">Rata-rata entropy</p>
-          <p id="kpiEntropy" class="text-2xl font-bold text-slate-900">-</p>
-        </div>
-        <div class="bg-white border border-slate-200 rounded-lg p-3">
-          <p class="text-xs text-slate-500">PSNR = &#x221e;</p>
-          <p id="kpiPsnr" class="text-2xl font-bold text-emerald-700">-</p>
-        </div>
-      </section>
+        <!-- KPI Cards -->
+        <section class="border-b border-primary-100 bg-white">
+          <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              <div
+                class="rounded-xl border border-primary-100 bg-primary-50 p-4"
+              >
+                <p
+                  class="text-xs font-medium text-primary-700 uppercase tracking-wide"
+                >
+                  Total Eksperimen
+                </p>
+                <p id="kpiTotal" class="text-3xl font-bold text-slate-900 mt-1">
+                  -
+                </p>
+              </div>
 
-      <!-- Summary table per method (manuscript-ready) -->
-      <section
-        class="bg-white rounded-lg shadow border border-slate-200 overflow-hidden"
-      >
-        <div class="px-4 py-3 border-b border-slate-200 bg-slate-50">
-          <h2 class="text-sm font-semibold text-slate-800">
-            Tabel 1. Ringkasan Statistik per Metode
-          </h2>
-          <p class="text-xs text-slate-400 mt-0.5">
-            mean &#177; sd (standard deviation), n = jumlah sampel
+              <div
+                class="rounded-xl border border-primary-100 bg-primary-50 p-4"
+              >
+                <p
+                  class="text-xs font-medium text-primary-700 uppercase tracking-wide"
+                >
+                  Rata-rata Enc (s)
+                </p>
+                <p id="kpiEnc" class="text-3xl font-bold text-slate-900 mt-1">
+                  -
+                </p>
+              </div>
+
+              <div
+                class="rounded-xl border border-primary-100 bg-primary-50 p-4"
+              >
+                <p
+                  class="text-xs font-medium text-primary-700 uppercase tracking-wide"
+                >
+                  Rata-rata Dec (s)
+                </p>
+                <p id="kpiDec" class="text-3xl font-bold text-slate-900 mt-1">
+                  -
+                </p>
+              </div>
+
+              <div
+                class="rounded-xl border border-primary-100 bg-primary-50 p-4"
+              >
+                <p
+                  class="text-xs font-medium text-primary-700 uppercase tracking-wide"
+                >
+                  Rata-rata Entropy
+                </p>
+                <p
+                  id="kpiEntropy"
+                  class="text-3xl font-bold text-slate-900 mt-1"
+                >
+                  -
+                </p>
+              </div>
+
+              <div
+                class="rounded-xl border border-primary-200 bg-primary-100 p-4"
+              >
+                <p
+                  class="text-xs font-medium text-primary-800 uppercase tracking-wide"
+                >
+                  PSNR = &#x221e;
+                </p>
+                <p
+                  id="kpiPsnr"
+                  class="text-3xl font-bold text-primary-700 mt-1"
+                >
+                  -
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Summary table per method -->
+        <section class="border-b border-primary-100 bg-primary-50">
+          <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <h2 class="text-base font-semibold text-slate-900 mb-1">
+              Tabel 1. Ringkasan Statistik per Metode
+            </h2>
+            <p class="text-xs text-slate-500 mb-3">
+              mean &#177; sd (standard deviation) &nbsp;·&nbsp; n = jumlah
+              sampel
+            </p>
+            <div
+              class="overflow-x-auto rounded-lg border border-primary-100 shadow-sm"
+            >
+              <table
+                class="min-w-full text-sm divide-y divide-primary-100 bg-white"
+              >
+                <thead class="bg-primary-100">
+                  <tr>
+                    <th
+                      class="px-4 py-2.5 text-left font-semibold text-primary-900"
+                    >
+                      Metode
+                    </th>
+                    <th
+                      class="px-4 py-2.5 text-right font-semibold text-primary-900"
+                    >
+                      n
+                    </th>
+                    <th
+                      class="px-4 py-2.5 text-right font-semibold text-primary-900"
+                    >
+                      Enc Time mean&#177;sd (s)
+                    </th>
+                    <th
+                      class="px-4 py-2.5 text-right font-semibold text-primary-900"
+                    >
+                      Dec Time mean&#177;sd (s)
+                    </th>
+                    <th
+                      class="px-4 py-2.5 text-right font-semibold text-primary-900"
+                    >
+                      Entropy mean&#177;sd
+                    </th>
+                    <th
+                      class="px-4 py-2.5 text-right font-semibold text-primary-900"
+                    >
+                      PSNR &#x221e; (%)
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  id="methodSummaryBody"
+                  class="divide-y divide-primary-50"
+                >
+                  <tr>
+                    <td
+                      colspan="6"
+                      class="px-4 py-6 text-center text-slate-400"
+                    >
+                      Loading...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Raw data table -->
+        <section class="bg-white">
+          <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex justify-between items-center mb-3">
+              <div>
+                <h2 class="text-base font-semibold text-slate-900">
+                  Data Mentah (30 Terbaru)
+                </h2>
+                <p class="text-xs text-slate-500">
+                  Cek cepat kualitas pencatatan eksperimen
+                </p>
+              </div>
+            </div>
+            <div
+              class="overflow-x-auto rounded-lg border border-primary-100 shadow-sm"
+              style="max-height: 420px; overflow-y: auto"
+            >
+              <table
+                class="min-w-full text-sm divide-y divide-primary-100 bg-white"
+              >
+                <thead class="bg-primary-100" style="position: sticky; top: 0">
+                  <tr>
+                    <th
+                      class="px-3 py-2.5 text-left font-semibold text-primary-900"
+                    >
+                      ID
+                    </th>
+                    <th
+                      class="px-3 py-2.5 text-left font-semibold text-primary-900"
+                    >
+                      File
+                    </th>
+                    <th
+                      class="px-3 py-2.5 text-left font-semibold text-primary-900"
+                    >
+                      Method
+                    </th>
+                    <th
+                      class="px-3 py-2.5 text-right font-semibold text-primary-900"
+                    >
+                      Enc (s)
+                    </th>
+                    <th
+                      class="px-3 py-2.5 text-right font-semibold text-primary-900"
+                    >
+                      Dec (s)
+                    </th>
+                    <th
+                      class="px-3 py-2.5 text-right font-semibold text-primary-900"
+                    >
+                      Entropy
+                    </th>
+                    <th
+                      class="px-3 py-2.5 text-center font-semibold text-primary-900"
+                    >
+                      PSNR
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody" class="divide-y divide-primary-50">
+                  <tr>
+                    <td
+                      colspan="7"
+                      class="px-4 py-8 text-center text-slate-400"
+                    >
+                      Loading...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- Footer (identical to index.html) -->
+      <footer class="border-t border-primary-200 bg-white">
+        <div
+          class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2"
+        >
+          <p class="text-xs text-slate-500">
+            &#169; 2026 Universitas Jember &middot; AgroCipher Microservices
+            Prototype for Adaptive Coffee Leaf Image Encryption.
+          </p>
+          <p class="text-xs text-slate-500">
+            Backend: Go + Python &middot; Docker Compose &middot; SQLite
+            experiment logging.
           </p>
         </div>
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm divide-y divide-slate-200">
-            <thead class="bg-slate-100">
-              <tr>
-                <th class="px-4 py-2 text-left font-medium text-slate-600">
-                  Metode
-                </th>
-                <th class="px-4 py-2 text-right font-medium text-slate-600">
-                  n
-                </th>
-                <th class="px-4 py-2 text-right font-medium text-slate-600">
-                  Enc Time mean&#177;sd (s)
-                </th>
-                <th class="px-4 py-2 text-right font-medium text-slate-600">
-                  Dec Time mean&#177;sd (s)
-                </th>
-                <th class="px-4 py-2 text-right font-medium text-slate-600">
-                  Entropy mean&#177;sd
-                </th>
-                <th class="px-4 py-2 text-right font-medium text-slate-600">
-                  PSNR &#x221e; (%)
-                </th>
-              </tr>
-            </thead>
-            <tbody
-              id="methodSummaryBody"
-              class="divide-y divide-slate-200 bg-white"
-            >
-              <tr>
-                <td colspan="6" class="px-4 py-6 text-center text-slate-400">
-                  Loading...
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Raw data table (30 latest) -->
-      <section
-        class="bg-white rounded-lg shadow border border-slate-200 overflow-hidden"
-      >
-        <div
-          class="px-4 py-3 border-b border-slate-200 bg-slate-50 flex justify-between items-center"
-        >
-          <h2 class="text-sm font-semibold text-slate-800">
-            Data Mentah (30 Terbaru)
-          </h2>
-          <span class="text-xs text-slate-400"
-            >Cek cepat kualitas pencatatan</span
-          >
-        </div>
-        <div
-          class="overflow-x-auto"
-          style="max-height: 420px; overflow-y: auto"
-        >
-          <table class="min-w-full text-sm divide-y divide-slate-200">
-            <thead class="bg-slate-100" style="position: sticky; top: 0">
-              <tr>
-                <th class="px-3 py-2 text-left font-medium text-slate-600">
-                  ID
-                </th>
-                <th class="px-3 py-2 text-left font-medium text-slate-600">
-                  File
-                </th>
-                <th class="px-3 py-2 text-left font-medium text-slate-600">
-                  Method
-                </th>
-                <th class="px-3 py-2 text-right font-medium text-slate-600">
-                  Enc (s)
-                </th>
-                <th class="px-3 py-2 text-right font-medium text-slate-600">
-                  Dec (s)
-                </th>
-                <th class="px-3 py-2 text-right font-medium text-slate-600">
-                  Entropy
-                </th>
-                <th class="px-3 py-2 text-center font-medium text-slate-600">
-                  PSNR
-                </th>
-              </tr>
-            </thead>
-            <tbody id="tableBody" class="divide-y divide-slate-200 bg-white">
-              <tr>
-                <td colspan="7" class="px-4 py-8 text-center text-slate-400">
-                  Loading...
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+      </footer>
     </div>
 
     <script>
@@ -303,7 +477,7 @@
             var entArr = items.map(function (x) {
               return toNum(x.cipher_entropy);
             });
-            var infCount = items.filter(function (x) {
+            var infCnt = items.filter(function (x) {
               return String(x.psnr).trim() === "\u221e";
             }).length;
             return {
@@ -315,7 +489,7 @@
               decSd: sd(decArr),
               entMean: mean(entArr),
               entSd: sd(entArr),
-              psnrPct: (infCount / items.length) * 100,
+              psnrPct: (infCnt / items.length) * 100,
             };
           })
           .sort(function (a, b) {
@@ -325,6 +499,7 @@
         tbody.innerHTML = "";
         rows.forEach(function (r) {
           var tr = document.createElement("tr");
+          tr.className = "hover:bg-primary-50";
           tr.innerHTML =
             '<td class="px-4 py-2 font-medium text-slate-900">' +
             r.method +
@@ -347,7 +522,7 @@
             " &plusmn; " +
             fmt4(r.entSd) +
             "</td>" +
-            '<td class="px-4 py-2 text-right font-semibold text-emerald-700">' +
+            '<td class="px-4 py-2 text-right font-semibold text-primary-700">' +
             r.psnrPct.toFixed(1) +
             "%</td>";
           tbody.appendChild(tr);
@@ -365,7 +540,7 @@
         tbody.innerHTML = "";
         rows.forEach(function (row) {
           var tr = document.createElement("tr");
-          tr.className = "hover:bg-slate-50";
+          tr.className = "hover:bg-primary-50";
           tr.innerHTML =
             '<td class="px-3 py-2 text-slate-500">' +
             row.id +
@@ -375,7 +550,7 @@
             '" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
             row.filename +
             "</td>" +
-            '<td class="px-3 py-2"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">' +
+            '<td class="px-3 py-2"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">' +
             row.method +
             "</span></td>" +
             '<td class="px-3 py-2 text-right font-mono text-slate-700">' +
@@ -387,7 +562,7 @@
             '<td class="px-3 py-2 text-right font-mono text-slate-700">' +
             fmt4(row.cipher_entropy) +
             "</td>" +
-            '<td class="px-3 py-2 text-center font-semibold text-emerald-700">' +
+            '<td class="px-3 py-2 text-center font-semibold text-primary-700">' +
             row.psnr +
             "</td>";
           tbody.appendChild(tr);
