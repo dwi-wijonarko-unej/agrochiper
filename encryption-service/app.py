@@ -133,6 +133,33 @@ def health():
     return {"status": "ok", "service": "encryption-service"}
 
 
+@app.get("/encryption/v1/logs")
+def get_logs():
+    cur.execute(
+        """
+        SELECT id, filename, method, encryption_time, decryption_time, cipher_entropy, psnr, created_at
+        FROM encryption_logs
+        ORDER BY id DESC LIMIT 100
+        """
+    )
+    rows = cur.fetchall()
+    logs = []
+    for r in rows:
+        logs.append(
+            {
+                "id": r[0],
+                "filename": r[1],
+                "method": r[2],
+                "encryption_time": r[3],
+                "decryption_time": r[4],
+                "cipher_entropy": r[5],
+                "psnr": r[6],
+                "created_at": r[7],
+            }
+        )
+    return {"status": "success", "data": logs}
+
+
 @app.post("/encryption/v1/process")
 async def process(file: UploadFile = File(...), cipher_mode: str = Form(...)):
     data = await file.read()

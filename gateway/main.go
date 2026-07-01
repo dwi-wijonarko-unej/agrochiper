@@ -195,11 +195,31 @@ func requireAPIKey(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+func logsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	logsURL := os.Getenv("ENCRYPTION_SERVICE_URL") + "/encryption/v1/logs"
+	resp, err := http.Get(logsURL)
+	if err != nil {
+		writeJSONError(w, http.StatusBadGateway, "failed to fetch logs: "+err.Error())
+		return
+	}
+	defer resp.Body.Close()
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(resp.StatusCode)
+	io.Copy(w, resp.Body)
+}
+
 func main() {
 	if os.Getenv("GATEWAY_API_KEY") == "" {
 		fmt.Println("WARNING: GATEWAY_API_KEY is not set; API requests will be rejected")
 	}
 	http.HandleFunc("/api/v1/encrypt-image", requireAPIKey(encryptHandler))
+	http.HandleFunc("/api/v1/logs", requireAPIKey(logsHandler))
 	http.HandleFunc("/health", healthHandler)
 	fmt.Println("Gateway listening on :8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {

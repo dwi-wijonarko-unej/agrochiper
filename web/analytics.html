@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgroCipher Analytics - Experiment Logs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="h-full text-slate-800 p-6">
+  <div class="max-w-7xl mx-auto space-y-6">
+    <!-- Header -->
+    <header class="flex justify-between items-end border-b border-slate-200 pb-4">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">AgroCipher Experiment Analytics</h1>
+        <p class="text-sm text-slate-500">Quantitative metrics for manuscript analysis (Encryption Time, Entropy, PSNR)</p>
+      </div>
+      <div class="flex items-center space-x-2">
+        <input type="password" id="apiKey" placeholder="Enter API Key" class="text-sm border border-slate-300 rounded px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none w-64" />
+        <button id="fetchBtn" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-1.5 px-4 rounded shadow">Load Data</button>
+        <a href="/" class="text-sm text-blue-600 hover:underline ml-2">Back to Home</a>
+      </div>
+    </header>
+
+    <div id="errorMsg" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-sm"></div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Time Comparison Chart -->
+      <div class="bg-white p-4 rounded-lg shadow border border-slate-200">
+        <h3 class="text-sm font-semibold text-slate-700 mb-2 text-center">Avg. Computational Time (Seconds)</h3>
+        <canvas id="timeChart" height="200"></canvas>
+      </div>
+      <!-- Entropy Chart -->
+      <div class="bg-white p-4 rounded-lg shadow border border-slate-200">
+        <h3 class="text-sm font-semibold text-slate-700 mb-2 text-center">Avg. Ciphertext Entropy (Bits)</h3>
+        <canvas id="entropyChart" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="bg-white rounded-lg shadow border border-slate-200 overflow-hidden">
+      <div class="px-4 py-3 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+        <h3 class="text-sm font-semibold text-slate-800">Raw Experiment Data (Latest 100)</h3>
+        <button id="exportCsv" class="text-xs bg-slate-800 text-white px-3 py-1 rounded hover:bg-slate-700">Export CSV</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+          <thead class="bg-slate-100">
+            <tr>
+              <th class="px-4 py-2 text-left font-medium text-slate-600">ID</th>
+              <th class="px-4 py-2 text-left font-medium text-slate-600">Filename</th>
+              <th class="px-4 py-2 text-left font-medium text-slate-600">Method (AI Selected)</th>
+              <th class="px-4 py-2 text-right font-medium text-slate-600">Enc Time (s)</th>
+              <th class="px-4 py-2 text-right font-medium text-slate-600">Dec Time (s)</th>
+              <th class="px-4 py-2 text-right font-medium text-slate-600">Cipher Entropy</th>
+              <th class="px-4 py-2 text-center font-medium text-slate-600">PSNR</th>
+              <th class="px-4 py-2 text-right font-medium text-slate-600">Timestamp</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y divide-slate-200 bg-white">
+            <tr><td colspan="8" class="px-4 py-8 text-center text-slate-400">Enter API Key and click Load Data to fetch logs.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let timeChartInstance = null;
+    let entropyChartInstance = null;
+    let currentData = [];
+
+    document.getElementById('fetchBtn').addEventListener('click', fetchData);
+    document.getElementById('exportCsv').addEventListener('click', exportCSV);
+
+    async function fetchData() {
+      const apiKey = document.getElementById('apiKey').value.trim();
+      const errEl = document.getElementById('errorMsg');
+      errEl.classList.add('hidden');
+
+      if (!apiKey) {
+        errEl.textContent = "Please enter an API Key.";
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/v1/logs', {
+          headers: { 'X-API-Key': apiKey }
+        });
+
+        if (!res.ok) {
+          throw new Error(`API Error: ${res.status} ${res.statusText}`);
+        }
+
+        const json = await res.json();
+        currentData = json.data || [];
+        updateDashboard(currentData);
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    function updateDashboard(data) {
+      if (data.length === 0) {
+        document.getElementById('tableBody').innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-slate-400">No data found in the database. Run some experiments first!</td></tr>';
+        return;
+      }
+
+      // Update Table
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50";
+        tr.innerHTML = `
+          <td class="px-4 py-2 text-slate-500">${row.id}</td>
+          <td class="px-4 py-2 font-medium text-slate-900 truncate max-w-[150px]" title="${row.filename}">${row.filename}</td>
+          <td class="px-4 py-2"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">${row.method}</span></td>
+          <td class="px-4 py-2 text-right text-slate-700">${row.encryption_time.toFixed(4)}</td>
+          <td class="px-4 py-2 text-right text-slate-700">${row.decryption_time.toFixed(4)}</td>
+          <td class="px-4 py-2 text-right text-slate-700 font-mono">${row.cipher_entropy.toFixed(4)}</td>
+          <td class="px-4 py-2 text-center text-emerald-600 font-bold">${row.psnr}</td>
+          <td class="px-4 py-2 text-right text-slate-500 text-xs">${new Date(row.created_at).toLocaleString()}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Calculate Averages for Charts
+      const stats = {
+        'UHC': { count: 0, enc: 0, dec: 0, ent: 0 },
+        'Blowfish': { count: 0, enc: 0, dec: 0, ent: 0 },
+        'Hybrid UHC-Blowfish': { count: 0, enc: 0, dec: 0, ent: 0 },
+        'Hybrid': { count: 0, enc: 0, dec: 0, ent: 0 } // Fallback
+      };
+
+      data.forEach(r => {
+        let m = r.method;
+        if(m === 'Hybrid UHC-Blowfish') m = 'Hybrid'; // shorten name for chart
+        if (!stats[m]) stats[m] = { count: 0, enc: 0, dec: 0, ent: 0 };
+        stats[m].count++;
+        stats[m].enc += r.encryption_time;
+        stats[m].dec += r.decryption_time;
+        stats[m].ent += r.cipher_entropy;
+      });
+
+      const labels = Object.keys(stats).filter(k => stats[k].count > 0);
+      const avgEnc = labels.map(k => (stats[k].enc / stats[k].count).toFixed(4));
+      const avgDec = labels.map(k => (stats[k].dec / stats[k].count).toFixed(4));
+      const avgEnt = labels.map(k => (stats[k].ent / stats[k].count).toFixed(4));
+
+      // Draw Time Chart
+      const ctxTime = document.getElementById('timeChart').getContext('2d');
+      if (timeChartInstance) timeChartInstance.destroy();
+      timeChartInstance = new Chart(ctxTime, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Avg Encryption (s)', data: avgEnc, backgroundColor: 'rgba(59, 130, 246, 0.7)' },
+            { label: 'Avg Decryption (s)', data: avgDec, backgroundColor: 'rgba(16, 185, 129, 0.7)' }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+      });
+
+      // Draw Entropy Chart
+      const ctxEnt = document.getElementById('entropyChart').getContext('2d');
+      if (entropyChartInstance) entropyChartInstance.destroy();
+      entropyChartInstance = new Chart(ctxEnt, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{ label: 'Avg Entropy (Max 8.0)', data: avgEnt, backgroundColor: 'rgba(139, 92, 246, 0.7)' }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 7.0, max: 8.0 } } }
+      });
+    }
+
+    function exportCSV() {
+      if (currentData.length === 0) return;
+      let csvContent = "data:text/csv;charset=utf-8,ID,Filename,Method,Encryption_Time,Decryption_Time,Cipher_Entropy,PSNR,Created_At\n";
+      currentData.forEach(r => {
+        let row = `${r.id},"${r.filename}","${r.method}",${r.encryption_time},${r.decryption_time},${r.cipher_entropy},${r.psnr},"${r.created_at}"`;
+        csvContent += row + "\r\n";
+      });
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "agrocipher_experiment_logs.csv");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+  </script>
+</body>
+</html>

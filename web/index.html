@@ -87,17 +87,26 @@
           </div>
 
           <!-- Language toggle -->
-          <div class="flex items-center space-x-2 text-xs font-semibold">
+          <div class="flex items-center space-x-3 text-xs font-semibold">
             <a
-              href="?lang=id"
-              class="px-2 py-1 rounded-md border border-primary-200 bg-primary-50 text-primary-800 hover:bg-primary-100"
-              >ID</a
+              href="/analytics.html"
+              class="text-blue-600 hover:text-blue-800 underline decoration-blue-300 underline-offset-2 whitespace-nowrap"
+              >📊 Analytics Dashboard</a
             >
-            <a
-              href="?lang=en"
-              class="px-2 py-1 rounded-md border border-primary-200 bg-white text-slate-700 hover:bg-primary-50"
-              >EN</a
+            <div
+              class="flex items-center space-x-1 border-l border-primary-200 pl-3"
             >
+              <a
+                href="?lang=id"
+                class="px-2 py-1 rounded-md border border-primary-200 bg-primary-50 text-primary-800 hover:bg-primary-100"
+                >ID</a
+              >
+              <a
+                href="?lang=en"
+                class="px-2 py-1 rounded-md border border-primary-200 bg-white text-slate-700 hover:bg-primary-50"
+                >EN</a
+              >
+            </div>
           </div>
         </div>
       </header>
@@ -208,11 +217,11 @@
                   class="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-4"
                 >
                   <a
-                    href="#demo"
+                    href="#usage"
                     class="inline-flex items-center justify-center rounded-md bg-primary-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700"
                   >
-                    <span class="lang-block lang-en">View Demo Workflow</span>
-                    <span class="lang-block lang-id">Lihat Alur Demo</span>
+                    <span class="lang-block lang-en">View API Usage</span>
+                    <span class="lang-block lang-id">Lihat Penggunaan API</span>
                   </a>
                   <a
                     href="#architecture"
@@ -393,6 +402,84 @@
               UHC–Blowfish bergantung pada kompleksitas citra. Metrik eksperimen
               dicatat di SQLite untuk analisis kuantitatif.
             </p>
+          </div>
+        </section>
+
+        <!-- Usage / API Document -->
+        <section id="usage" class="border-t border-primary-100 bg-primary-50">
+          <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <h2
+              class="text-lg font-semibold text-slate-900 mb-4 lang-block lang-en"
+            >
+              API Usage (cURL)
+            </h2>
+            <h2
+              class="text-lg font-semibold text-slate-900 mb-4 lang-block lang-id"
+            >
+              Penggunaan API (cURL)
+            </h2>
+
+            <p
+              class="text-sm text-slate-700 leading-relaxed mb-4 lang-block lang-en"
+            >
+              The gateway exposes a single protected endpoint. You must provide
+              your API Key via the <code>X-API-Key</code> header and attach the
+              image using multipart form-data.
+            </p>
+            <p
+              class="text-sm text-slate-700 leading-relaxed mb-4 lang-block lang-id"
+            >
+              Gateway menyediakan satu rute yang dilindungi. Anda wajib
+              menyertakan API Key melalui header <code>X-API-Key</code> dan
+              mengirimkan gambar menggunakan format multipart form-data.
+            </p>
+
+            <div
+              class="bg-slate-900 rounded-lg p-4 overflow-x-auto text-sm text-emerald-400 font-mono shadow-inner mb-6"
+            >
+              <pre><code>curl -X POST http://localhost:8080/api/v1/encrypt-image \
+    -H "X-API-Key: YOUR_API_KEY_HERE" \
+    -F "file=@sample.jpg"</code></pre>
+            </div>
+
+            <h3
+              class="text-sm font-semibold text-slate-800 mb-2 lang-block lang-en"
+            >
+              Expected JSON Response
+            </h3>
+            <h3
+              class="text-sm font-semibold text-slate-800 mb-2 lang-block lang-id"
+            >
+              Contoh Balasan JSON
+            </h3>
+
+            <div
+              class="bg-slate-900 rounded-lg p-4 overflow-x-auto text-xs text-sky-300 font-mono shadow-inner"
+            >
+              <pre><code>{
+    "file": "sample.jpg",
+    "features": {
+      "entropy": 7.1234,
+      "size_kb": 45.67,
+      "glcm_correlation": 0.8912,
+      "glcm_contrast": 0.4567
+    },
+    "selector": {
+      "decision_code": 2,
+      "recommended_cipher": "Hybrid UHC-Blowfish",
+      "reasoning": "High entropy and contrast detected. Maximum security fallback activated."
+    },
+    "result": {
+      "method": "Hybrid UHC-Blowfish",
+      "encryption_time": 0.0452,
+      "decryption_time": 0.0410,
+      "cipher_entropy": 7.9891,
+      "psnr": "∞",
+      "output_filename": "sample.jpg.dat",
+      "cipher_base64": "AAAAAA... (base64 string)"
+    }
+  }</code></pre>
+            </div>
           </div>
         </section>
 
