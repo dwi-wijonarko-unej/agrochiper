@@ -219,7 +219,7 @@ func main() {
 		fmt.Println("WARNING: GATEWAY_API_KEY is not set; API requests will be rejected")
 	}
 	http.HandleFunc("/api/v1/encrypt-image", requireAPIKey(encryptHandler))
-	http.HandleFunc("/api/v1/logs", requireAPIKey(logsHandler))
+	http.HandleFunc("/api/v1/logs", logsHandler)
 	http.HandleFunc("/health", healthHandler)
 	fmt.Println("Gateway listening on :8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
