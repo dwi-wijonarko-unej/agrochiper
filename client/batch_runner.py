@@ -4,8 +4,7 @@ batch_runner.py — AgroCipher batch encryption client.
 Usage:
     python batch_runner.py <folder_dataset> [api_url] [output_csv]
 
-API key dibaca otomatis dari file .env di folder project (GATEWAY_API_KEY).
-Bisa juga di-override dengan env var: AGROCIPHER_API_KEY=mykey python batch_runner.py ./dataset
+API key dibaca otomatis dari GATEWAY_API_KEY di file .env root project.
 
 Examples:
     python batch_runner.py ./dataset-daun-kopi
@@ -27,56 +26,39 @@ import requests
 # ---------------------------------------------------------------------------
 API_URL_DEFAULT = "http://localhost:8080/api/v1/encrypt-image"
 IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png")
-RETRY_COUNT = 3  # max attempts per image
-RETRY_DELAY_S = 2.0  # seconds to wait between retries
-FLUSH_EVERY = 10  # flush CSV to disk every N rows
+RETRY_COUNT = 3
+RETRY_DELAY_S = 2.0
+FLUSH_EVERY = 10
+
+# Satu-satunya .env yang dicari: tepat satu level di atas folder client/
+ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
 
 
 # ---------------------------------------------------------------------------
-# .env reader
+# .env reader — sesederhana mungkin, tidak ada manipulasi string yang rumit
 # ---------------------------------------------------------------------------
 
 
-def load_env_file() -> tuple:
+def read_gateway_api_key() -> str:
     """
-    Cari dan baca file .env, kembalikan (path_yang_dibaca, dict_nilai).
-    Kandidat dicek berurutan, file pertama yang ada yang dipakai.
-    Nilai inline komentar (# ...) diabaikan.
+    Baca GATEWAY_API_KEY dari ENV_FILE baris per baris.
+    Tidak melakukan strip apapun selain newline — nilai diambil apa adanya.
     """
-    script_dir = Path(__file__).resolve().parent
-    candidates = [
-        script_dir.parent / ".env",  # root project  (client/../.env)
-        script_dir / ".env",  # folder client
-        Path("/opt/research/agrochiper/.env"),  # path absolut VPS
-        Path.home() / "agrochiper" / ".env",  # ~/agrochiper/.env
-    ]
+    if not ENV_FILE.exists():
+        return ""
 
-    for env_path in candidates:
-        if not env_path.exists():
-            continue
-        result: Dict[str, str] = {}
-        with open(env_path, encoding="utf-8") as f:
-            for line in f:
-                # Hapus trailing newline/whitespace dulu
-                line = line.rstrip("\r\n")
-                # Hapus inline komentar (# ...) — tapi hanya di luar tanda kutip
-                if " #" in line:
-                    line = line[: line.index(" #")]
-                line = line.strip()
-                if not line or line.startswith("#") or "=" not in line:
-                    continue
-                key, _, val = line.partition("=")
-                key = key.strip()
-                # Hapus kutip pembungkus jika ada
-                val = val.strip()
-                if (val.startswith('"') and val.endswith('"')) or (
-                    val.startswith("'") and val.endswith("'")
-                ):
-                    val = val[1:-1]
-                result[key] = val
-        return env_path, result
+    with open(ENV_FILE, "rb") as f:  # buka sebagai bytes untuk debug
+        raw = f.read()
 
-    return None, {}
+    # Decode, normalize line endings
+    text = raw.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n")
+
+    for line in text.split("\n"):
+        # Cari baris yang tepat dimulai dengan GATEWAY_API_KEY=
+        if line.startswith("GATEWAY_API_KEY="):
+            val = line[len("GATEWAY_API_KEY=") :]  # ambil semua setelah '='
+            return val  # kembalikan apa adanya, tanpa strip apapun
+    return ""
 
 
 # ---------------------------------------------------------------------------
@@ -94,52 +76,39 @@ def find_image_files(root_folder: str) -> List[str]:
     return sorted(files)
 
 
-def load_done_set(output_csv: str, rel_path_col: str = "relative_path") -> Set[str]:
-    """
-    Baca CSV yang sudah ada dan kembalikan set relative_path yang sudah
-    berhasil diproses (kolom error kosong). Digunakan untuk fitur resume.
-    """
+def load_done_set(output_csv: str) -> Set[str]:
+    """Kembalikan set relative_path yang sudah berhasil diproses (resume)."""
     done: Set[str] = set()
     if not os.path.exists(output_csv):
         return done
     with open(output_csv, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
+        for row in csv.DictReader(f):
             if row.get("error", "").strip() == "":
-                done.add(row.get(rel_path_col, ""))
+                done.add(row.get("relative_path", ""))
     return done
 
 
 def mime_for(path: str) -> str:
-    """Deteksi MIME type yang benar berdasarkan ekstensi file."""
     mime, _ = mimetypes.guess_type(path)
     return mime or "application/octet-stream"
 
 
 def send_image(api_url: str, image_path: str, api_key: str) -> Dict:
-    """Kirim satu gambar ke API gateway dengan API Key auth."""
     headers = {"X-API-Key": api_key}
-    mime = mime_for(image_path)
     with open(image_path, "rb") as f:
-        files = {"file": (os.path.basename(image_path), f, mime)}
-        resp = requests.post(api_url, files=files, headers=headers, timeout=60)
+        resp = requests.post(
+            api_url,
+            files={"file": (os.path.basename(image_path), f, mime_for(image_path))},
+            headers=headers,
+            timeout=60,
+        )
     resp.raise_for_status()
     return resp.json()
 
 
-def send_with_retry(
-    api_url: str,
-    image_path: str,
-    api_key: str,
-    retries: int = RETRY_COUNT,
-    delay: float = RETRY_DELAY_S,
-) -> Dict:
-    """
-    Coba kirim gambar hingga `retries` kali.
-    Langsung gagal pada 4xx (misal 401) — retry tidak akan membantu.
-    """
+def send_with_retry(api_url: str, image_path: str, api_key: str) -> Dict:
     last_exc: Optional[Exception] = None
-    for attempt in range(1, retries + 1):
+    for attempt in range(1, RETRY_COUNT + 1):
         try:
             return send_image(api_url, image_path, api_key)
         except requests.HTTPError as e:
@@ -148,11 +117,11 @@ def send_with_retry(
             last_exc = e
         except (requests.ConnectionError, requests.Timeout) as e:
             last_exc = e
-
-        if attempt < retries:
-            print(f"          [retry {attempt}/{retries}] tunggu {delay}s ...")
-            time.sleep(delay)
-
+        if attempt < RETRY_COUNT:
+            print(
+                f"          [retry {attempt}/{RETRY_COUNT}] tunggu {RETRY_DELAY_S}s ..."
+            )
+            time.sleep(RETRY_DELAY_S)
     raise last_exc  # type: ignore[misc]
 
 
@@ -171,32 +140,19 @@ def main() -> None:
     output_csv = sys.argv[3] if len(sys.argv) >= 4 else "results_batch.csv"
 
     # --- Baca API key ---
-    # Prioritas 1: env var shell (AGROCIPHER_API_KEY)
-    api_key = os.environ.get("AGROCIPHER_API_KEY", "").strip()
-    key_src = "env var AGROCIPHER_API_KEY"
+    api_key = read_gateway_api_key()
 
-    # Prioritas 2: GATEWAY_API_KEY dari file .env
-    if not api_key:
-        env_path, env_vars = load_env_file()
-        api_key = env_vars.get("GATEWAY_API_KEY", "").strip()
-        key_src = str(env_path) if env_path else "tidak ditemukan"
-
-    if not api_key:
-        print("ERROR: API key tidak ditemukan.")
-        print("  Pastikan file .env di root project memiliki baris:")
-        print("    GATEWAY_API_KEY=<kunci-anda>")
-        sys.exit(1)
-
-    # Tampilkan panjang kunci dan 8 karakter terakhir untuk verifikasi
-    print(f"API key source  : {key_src}")
-    print(
-        f"API key (len={len(api_key)}): {'*' * max(0, len(api_key) - 8)}{api_key[-8:]}"
-    )
+    print(f".env path       : {ENV_FILE}")
+    print(f".env exists     : {ENV_FILE.exists()}")
+    print(f"API key len     : {len(api_key)} karakter  (harus 64)")
+    print(f"API key end     : ...{api_key[-8:] if len(api_key) >= 8 else api_key}")
 
     if len(api_key) != 64:
-        print(
-            f"WARNING: Panjang kunci {len(api_key)} karakter, seharusnya 64. Periksa file .env!"
-        )
+        print()
+        print("ERROR: Panjang API key tidak 64 karakter.")
+        print(f"       Nilai yang terbaca: [{api_key}]")
+        print(f"       Periksa file: {ENV_FILE}")
+        sys.exit(1)
 
     if not os.path.isdir(dataset_folder):
         print(f"ERROR: Folder '{dataset_folder}' tidak ditemukan.")
@@ -204,16 +160,16 @@ def main() -> None:
 
     image_files = find_image_files(dataset_folder)
     if not image_files:
-        print(f"Tidak ada file gambar (.jpg/.jpeg/.png) di '{dataset_folder}'.")
+        print(f"Tidak ada file gambar di '{dataset_folder}'.")
         sys.exit(1)
 
-    # --- Resume: lewati file yang sudah berhasil ---
     done_set = load_done_set(output_csv)
     resume_mode = bool(done_set)
     pending = [
         p for p in image_files if os.path.relpath(p, dataset_folder) not in done_set
     ]
 
+    print()
     print(f"Dataset folder  : {dataset_folder}")
     print(f"API endpoint    : {api_url}")
     print(f"Output CSV      : {output_csv}")
@@ -256,30 +212,15 @@ def main() -> None:
 
         for idx, img_path in enumerate(pending, start=1):
             rel_name = os.path.relpath(img_path, dataset_folder)
-            row: Dict = {
-                "relative_path": rel_name,
-                "filename": os.path.basename(img_path),
-                "error": "",
-                "method": "",
-                "decision_code": "",
-                "reasoning": "",
-                "encryption_time": "",
-                "decryption_time": "",
-                "cipher_entropy": "",
-                "psnr": "",
-                "entropy": "",
-                "size_kb": "",
-                "glcm_correlation": "",
-                "glcm_contrast": "",
-            }
+            row: Dict = {k: "" for k in fieldnames}
+            row["relative_path"] = rel_name
+            row["filename"] = os.path.basename(img_path)
 
             try:
                 resp_json = send_with_retry(api_url, img_path, api_key)
-
                 features = resp_json.get("features", {})
                 selector = resp_json.get("selector", {})
                 result = resp_json.get("result", {})
-
                 row.update(
                     {
                         "method": result.get("method", ""),
@@ -295,7 +236,6 @@ def main() -> None:
                         "glcm_contrast": features.get("glcm_contrast", ""),
                     }
                 )
-
                 writer.writerow(row)
                 total_ok += 1
                 print(f"[{idx:4d}/{total_all}] {rel_name:<50} -> {row['method']} (OK)")
@@ -313,7 +253,6 @@ def main() -> None:
         csvfile.flush()
 
     end_all = time.perf_counter()
-
     print("\n" + "=" * 45)
     print("  RINGKASAN BATCH")
     print("=" * 45)
@@ -322,7 +261,6 @@ def main() -> None:
     print(f"  Total waktu batch  : {end_all - start_all:>8.2f} detik")
     print(f"  Hasil tersimpan di : {output_csv}")
     print("=" * 45)
-
     if total_err > 0:
         print(
             f"\nTip: Jalankan ulang perintah yang sama untuk me-retry {total_err} file yang gagal."
