@@ -1,100 +1,172 @@
 <!doctype html>
-<html lang="en" class="h-full bg-slate-50">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AgroCipher Analytics - Compact</title>
+    <title>AgroCipher Analytics</title>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  <body class="h-full text-slate-800 p-4 sm:p-6">
-    <div class="max-w-6xl mx-auto space-y</title></head>-5">
-      <header class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 border-b border-slate-200 pb-4">
+  <body class="bg-slate-50 text-slate-800 p-4 sm:p-6">
+    <div class="max-w-6xl mx-auto space-y-5">
+      <!-- Header -->
+      <header
+        class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 border-b border-slate-200 pb-4"
+      >
         <div>
-         </div> <h1 class="text-xl sm:text-2xl font-bold text-slate-900">AgroCipher Experiment Summary</h1>
-          <p class="text-sm text-slate-500">Ringkas untuk manuskrip: statistik inti + tabel sampel terbaru.</p>
+          <h1 class="text-xl font-bold text-slate-900">
+            AgroCipher Experiment Summary
+          </h1>
+          <p class="text-sm text-slate-500">
+            Ringkasan kuantitatif untuk manuskrip artikel ilmiah
+          </p>
         </div>
         <div class="flex items-center gap-2">
-          <button id="fetchBtn" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-1.5 px-4 rounded shadow">
+          <button
+            id="fetchBtn"
+            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-1.5 px-4 rounded shadow"
+          >
             Refresh
           </button>
-          <button id="exportCsv" class="text-xs bg-slate-800 text-white px-3 py-1.5 rounded hover:bg-slate-700">
+          <button
+            id="exportCsv"
+            class="text-xs bg-slate-800 text-white px-3 py-1.5 rounded hover:bg-slate-700"
+          >
             Export CSV
           </button>
           <a href="/" class="text-sm text-blue-600 hover:underline">Back</a>
         </div>
       </header>
 
-      <div id="errorMsg" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-sm"></div>
+      <!-- Error -->
+      <div
+        id="errorMsg"
+        class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-sm"
+      ></div>
 
-      <!-- KPI cards -->
+      <!-- KPI Cards -->
       <section class="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <div class="bg-white border border-slate-200 rounded-lg p-3">
           <p class="text-xs text-slate-500">Total eksperimen</p>
-          <p id="kpiTotal" class="text-lg font-bold text-slate-900">-</p>
+          <p id="kpiTotal" class="text-2xl font-bold text-slate-900">-</p>
         </div>
         <div class="bg-white border border-slate-200 rounded-lg p-3">
-          <p class="text-xs text-slate-500">Rata2 enc (s)</p>
-          <p id="kpiEnc" class="text-lg font-bold text-slate-900">-</p>
+          <p class="text-xs text-slate-500">Rata-rata enc (s)</p>
+          <p id="kpiEnc" class="text-2xl font-bold text-slate-900">-</p>
         </div>
         <div class="bg-white border border-slate-200 rounded-lg p-3">
-          <p class="text-xs text-slate-500">Rata2 dec (s)</p>
-          <p id="kpiDec" class="text-lg font-bold text-slate-900">-</p>
+          <p class="text-xs text-slate-500">Rata-rata dec (s)</p>
+          <p id="kpiDec" class="text-2xl font-bold text-slate-900">-</p>
         </div>
         <div class="bg-white border border-slate-200 rounded-lg p-3">
-          <p class="text-xs text-slate-500">Rata2 entropy</p>
-          <p id="kpiEntropy" class="text-lg font-bold text-slate-900">-</p>
+          <p class="text-xs text-slate-500">Rata-rata entropy</p>
+          <p id="kpiEntropy" class="text-2xl font-bold text-slate-900">-</p>
         </div>
         <div class="bg-white border border-slate-200 rounded-lg p-3">
-          <p class="text-xs text-slate-500">PSNR ∞</p>
-          <p id="kpiPsnr" class="text-lg font-bold text-emerald-700">-</p>
+          <p class="text-xs text-slate-500">PSNR = &#x221e;</p>
+          <p id="kpiPsnr" class="text-2xl font-bold text-emerald-700">-</p>
         </div>
       </section>
 
-      <!-- Manuscript-ready summary table -->
-      <section class="bg-white rounded-lg shadow border border-slate-200 overflow-hidden">
+      <!-- Summary table per method (manuscript-ready) -->
+      <section
+        class="bg-white rounded-lg shadow border border-slate-200 overflow-hidden"
+      >
         <div class="px-4 py-3 border-b border-slate-200 bg-slate-50">
-          <h2 class="text-sm font-semibold text-slate-800">Tabel Ringkasan per Metode (untuk manuscript)</h2>
+          <h2 class="text-sm font-semibold text-slate-800">
+            Tabel 1. Ringkasan Statistik per Metode
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">
+            mean &#177; sd (standard deviation), n = jumlah sampel
+          </p>
         </div>
         <div class="overflow-x-auto">
           <table class="min-w-full text-sm divide-y divide-slate-200">
             <thead class="bg-slate-100">
               <tr>
-               </tr> <th class="px-4 py-2 text-left font-medium text-slate-600">Metode</th>
-                <th class="px-4 py-2 text-right font-medium text-slate-600">n</th>
-                <th class="px-4 py-2 text-right font-medium text-slate-600">Enc mean±sd (s)</th>
-                <th class="px-4 py-2 text-right font-medium text-slate-600">Dec mean±sd (s)</th>
-                <th class="px-4 py-2 text-right font-medium text-slate-600">Entropy mean±sd</th>
-                <th class="px-4 py-2 text-right font-medium text-slate-600">PSNR ∞ (%)</th>
+                <th class="px-4 py-2 text-left font-medium text-slate-600">
+                  Metode
+                </th>
+                <th class="px-4 py-2 text-right font-medium text-slate-600">
+                  n
+                </th>
+                <th class="px-4 py-2 text-right font-medium text-slate-600">
+                  Enc Time mean&#177;sd (s)
+                </th>
+                <th class="px-4 py-2 text-right font-medium text-slate-600">
+                  Dec Time mean&#177;sd (s)
+                </th>
+                <th class="px-4 py-2 text-right font-medium text-slate-600">
+                  Entropy mean&#177;sd
+                </th>
+                <th class="px-4 py-2 text-right font-medium text-slate-600">
+                  PSNR &#x221e; (%)
+                </th>
               </tr>
             </thead>
-            <tbody id="methodSummaryBody" class="divide-y divide-slate-200 bg-white">
-              <tr><td colspan="6" class="px-4 py-6 text-center text-slate-400">Loading summary...</td></tr>
+            <tbody
+              id="methodSummaryBody"
+              class="divide-y divide-slate-200 bg-white"
+            >
+              <tr>
+                <td colspan="6" class="px-4 py-6 text-center text-slate-400">
+                  Loading...
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
       </section>
 
-      <!-- Compact raw data (limited) -->
-      <section class="bg-white rounded-lg shadow border border-slate-200 overflow-hidden">
-        <div class="px-4 py-3 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-          <h2 class="text-sm font-semibold text-slate-800">Data terbaru (30 baris terakhir)</h2>
-          <span class="text-xs text-slate-500">Untuk cek cepat kualitas data</span>
+      <!-- Raw data table (30 latest) -->
+      <section
+        class="bg-white rounded-lg shadow border border-slate-200 overflow-hidden"
+      >
+        <div
+          class="px-4 py-3 border-b border-slate-200 bg-slate-50 flex justify-between items-center"
+        >
+          <h2 class="text-sm font-semibold text-slate-800">
+            Data Mentah (30 Terbaru)
+          </h2>
+          <span class="text-xs text-slate-400"
+            >Cek cepat kualitas pencatatan</span
+          >
         </div>
-        <div class="overflow-x-auto max-h-[420px]">
+        <div
+          class="overflow-x-auto"
+          style="max-height: 420px; overflow-y: auto"
+        >
           <table class="min-w-full text-sm divide-y divide-slate-200">
-            <thead class="bg-slate-100 sticky top-0">
+            <thead class="bg-slate-100" style="position: sticky; top: 0">
               <tr>
-                <th class</tr>="px-3 py-2 text-left font-medium text-slate-600">ID</th>
-                <th class="px-3 py-2 text-left font-medium text-slate-600">File</th>
-                <th class="px-3 py-2 text-left font-medium text-slate-600">Method</th>
-                <th class="px-3 py-2 text-right font-medium text-slate-600">Enc</th>
-                <th class="px-3 py-2 text-right font-medium text-slate-600">Dec</th>
-                <th class="px-3 py-2 text-right font-medium text-slate-600">Entropy</th>
-                <th class="px-3 py-2 text-center font-medium text-slate-600">PSNR</th>
+                <th class="px-3 py-2 text-left font-medium text-slate-600">
+                  ID
+                </th>
+                <th class="px-3 py-2 text-left font-medium text-slate-600">
+                  File
+                </th>
+                <th class="px-3 py-2 text-left font-medium text-slate-600">
+                  Method
+                </th>
+                <th class="px-3 py-2 text-right font-medium text-slate-600">
+                  Enc (s)
+                </th>
+                <th class="px-3 py-2 text-right font-medium text-slate-600">
+                  Dec (s)
+                </th>
+                <th class="px-3 py-2 text-right font-medium text-slate-600">
+                  Entropy
+                </th>
+                <th class="px-3 py-2 text-center font-medium text-slate-600">
+                  PSNR
+                </th>
               </tr>
             </thead>
             <tbody id="tableBody" class="divide-y divide-slate-200 bg-white">
-              <tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">Loading experiment logs...</td></tr>
+              <tr>
+                <td colspan="7" class="px-4 py-8 text-center text-slate-400">
+                  Loading...
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -102,26 +174,34 @@
     </div>
 
     <script>
-</script>      let currentData = [];
+      var currentData = [];
 
       document.getElementById("fetchBtn").addEventListener("click", fetchData);
       document.getElementById("exportCsv").addEventListener("click", exportCSV);
       document.addEventListener("DOMContentLoaded", fetchData);
 
       function toNum(v) {
-        const n = Number(v);
-        return Number.isFinite(n) ? n : 0;
+        var n = Number(v);
+        return isFinite(n) ? n : 0;
       }
 
       function mean(arr) {
         if (!arr.length) return 0;
-        return arr.reduce((a, b) => a + b, 0) / arr.length;
+        return (
+          arr.reduce(function (a, b) {
+            return a + b;
+          }, 0) / arr.length
+        );
       }
 
       function sd(arr) {
         if (arr.length < 2) return 0;
-        const m = mean(arr);
-        const variance = arr.reduce((acc, x) => acc + (x - m) * (x - m), 0) / (arr.length - 1);
+        var m = mean(arr);
+        var variance =
+          arr.reduce(function (acc, x) {
+            return acc + (x - m) * (x - m);
+          }, 0) /
+          (arr.length - 1);
         return Math.sqrt(variance);
       }
 
@@ -129,70 +209,105 @@
         return toNum(n).toFixed(4);
       }
 
-      async function fetchData() {
-        const errEl = document.getElementById("errorMsg");
+      function fetchData() {
+        var errEl = document.getElementById("errorMsg");
         errEl.classList.add("hidden");
-        const fetchBtn = document.getElementById("fetchBtn");
-        fetchBtn.textContent = "Loading...";
+        var btn = document.getElementById("fetchBtn");
+        btn.textContent = "Loading...";
+        btn.disabled = true;
 
-        try {
-          const apiUrl = window.location.protocol + "//" + window.location.hostname + ":8080/api/v1/logs";
-          const res = await fetch(apiUrl);
-          if (!res.ok) throw new Error("API Error: " + res.status + " " + res.statusText);
+        var apiUrl =
+          window.location.protocol +
+          "//" +
+          window.location.hostname +
+          ":8080/api/v1/logs";
 
-          const json = await res.json();
-          currentData = Array.isArray(json.data) ? json.data : [];
-          renderAll(currentData);
-        } catch (err) {
-          errEl.textContent = err.message;
-          errEl.classList.remove("hidden");
-        } finally {
-          fetchBtn.textContent = "Refresh";
-        }
-      }
-
-      function renderAll(data) {
-        renderKPI(data);
-        renderMethodSummary(data);
-        renderRawTable(data.slice(0, 30));
+        fetch(apiUrl)
+          .then(function (res) {
+            if (!res.ok)
+              throw new Error(
+                "API Error: " + res.status + " " + res.statusText,
+              );
+            return res.json();
+          })
+          .then(function (json) {
+            currentData = Array.isArray(json.data) ? json.data : [];
+            renderKPI(currentData);
+            renderMethodSummary(currentData);
+            renderRawTable(currentData.slice(0, 30));
+          })
+          .catch(function (err) {
+            errEl.textContent = err.message;
+            errEl.classList.remove("hidden");
+          })
+          .finally(function () {
+            btn.textContent = "Refresh";
+            btn.disabled = false;
+          });
       }
 
       function renderKPI(data) {
-        const total = data.length;
-        const enc = data.map((r) => toNum(r.encryption_time));
-        const dec = data.map((r) => toNum(r.decryption_time));
-        const ent = data.map((r) => toNum(r.cipher_entropy));
-        const psnrInfCount = data.filter((r) => String(r.psnr).trim() === "∞").length;
+        var total = data.length;
+        var enc = data.map(function (r) {
+          return toNum(r.encryption_time);
+        });
+        var dec = data.map(function (r) {
+          return toNum(r.decryption_time);
+        });
+        var ent = data.map(function (r) {
+          return toNum(r.cipher_entropy);
+        });
+        var infCount = data.filter(function (r) {
+          return String(r.psnr).trim() === "\u221e";
+        }).length;
 
-        document.getElementById("kpiTotal").textContent = String(total);
-        document.getElementById("kpiEnc").textContent = total ? fmt4(mean(enc)) : "-";
-        document.getElementById("kpiDec").textContent = total ? fmt4(mean(dec)) : "-";
-        document.getElementById("kpiEntropy").textContent = total ? fmt4(mean(ent)) : "-";
-        document.getElementById("kpiPsnr").textContent = total ? ((psnrInfCount / total) * 100).toFixed(1) + "%" : "-";
+        document.getElementById("kpiTotal").textContent = total;
+        document.getElementById("kpiEnc").textContent = total
+          ? fmt4(mean(enc))
+          : "-";
+        document.getElementById("kpiDec").textContent = total
+          ? fmt4(mean(dec))
+          : "-";
+        document.getElementById("kpiEntropy").textContent = total
+          ? fmt4(mean(ent))
+          : "-";
+        document.getElementById("kpiPsnr").textContent = total
+          ? ((infCount / total) * 100).toFixed(1) + "%"
+          : "-";
       }
 
       function renderMethodSummary(data) {
-        const tbody = document.getElementById("methodSummaryBody");
+        var tbody = document.getElementById("methodSummaryBody");
         if (!data.length) {
-          tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-center text-slate-400">No data found.</td></tr>';
+          tbody.innerHTML =
+            '<tr><td colspan="6" class="px-4 py-6 text-center text-slate-400">Belum ada data.</td></tr>';
           return;
         }
 
-        const groups = {};
-        data.forEach((r) => {
-          const m = r.method || "Unknown";
+        var groups = {};
+        data.forEach(function (r) {
+          var m = r.method || "Unknown";
           if (!groups[m]) groups[m] = [];
           groups[m].push(r);
         });
 
-        const rows = Object.entries(groups)
-          .map(([method, items]) => {
-            const encArr = items.map((x) => toNum(x.encryption_time));
-            const decArr = items.map((x) => toNum(x.decryption_time));
-            const entArr = items.map((x) => toNum(x.cipher_entropy));
-            const psnrInf = items.filter((x) => String(x.psnr).trim() === "∞").length;
+        var rows = Object.keys(groups)
+          .map(function (method) {
+            var items = groups[method];
+            var encArr = items.map(function (x) {
+              return toNum(x.encryption_time);
+            });
+            var decArr = items.map(function (x) {
+              return toNum(x.decryption_time);
+            });
+            var entArr = items.map(function (x) {
+              return toNum(x.cipher_entropy);
+            });
+            var infCount = items.filter(function (x) {
+              return String(x.psnr).trim() === "\u221e";
+            }).length;
             return {
-              method,
+              method: method,
               n: items.length,
               encMean: mean(encArr),
               encSd: sd(encArr),
@@ -200,60 +315,114 @@
               decSd: sd(decArr),
               entMean: mean(entArr),
               entSd: sd(entArr),
-              psnrPct: (psnrInf / items.length) * 100,
+              psnrPct: (infCount / items.length) * 100,
             };
           })
-          .sort((a, b) => b.n - a.n);
+          .sort(function (a, b) {
+            return b.n - a.n;
+          });
 
         tbody.innerHTML = "";
-        rows.forEach((r) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td class="px-4 py-2 font-medium text-slate-900">${r.method}</td>
-            <td class="px-4 py-2 text-right text-slate-700">${r.n}</td>
-            <td class="px-4 py-2 text-right text-slate-700 font-mono">${fmt4(r.encMean)} ± ${fmt4(r.encSd)}</td>
-            <td class="px-4 py-2 text-right text-slate-700 font-mono">${fmt4(r.decMean)} ± ${fmt4(r.decSd)}</td>
-            <td class="px-4 py-2 text-right text-slate-700 font-mono">${fmt4(r.entMean)} ± ${fmt4(r.entSd)}</td>
-            <td class="px-4 py-2 text-right text-emerald-700 font-semibold">${r.psnrPct.toFixed(1)}%</td>
-          `;
+        rows.forEach(function (r) {
+          var tr = document.createElement("tr");
+          tr.innerHTML =
+            '<td class="px-4 py-2 font-medium text-slate-900">' +
+            r.method +
+            "</td>" +
+            '<td class="px-4 py-2 text-right text-slate-700">' +
+            r.n +
+            "</td>" +
+            '<td class="px-4 py-2 text-right font-mono text-slate-700">' +
+            fmt4(r.encMean) +
+            " &plusmn; " +
+            fmt4(r.encSd) +
+            "</td>" +
+            '<td class="px-4 py-2 text-right font-mono text-slate-700">' +
+            fmt4(r.decMean) +
+            " &plusmn; " +
+            fmt4(r.decSd) +
+            "</td>" +
+            '<td class="px-4 py-2 text-right font-mono text-slate-700">' +
+            fmt4(r.entMean) +
+            " &plusmn; " +
+            fmt4(r.entSd) +
+            "</td>" +
+            '<td class="px-4 py-2 text-right font-semibold text-emerald-700">' +
+            r.psnrPct.toFixed(1) +
+            "%</td>";
           tbody.appendChild(tr);
         });
       }
 
       function renderRawTable(rows) {
-        const tbody = document.getElementById("tableBody");
+        var tbody = document.getElementById("tableBody");
         if (!rows.length) {
-          tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">No data found in the database.</td></tr>';
+          tbody.innerHTML =
+            '<tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">Belum ada data.</td></tr>';
           return;
         }
 
         tbody.innerHTML = "";
-        rows.forEach((row) => {
-          const tr = document.createElement("tr");
+        rows.forEach(function (row) {
+          var tr = document.createElement("tr");
           tr.className = "hover:bg-slate-50";
-          tr.innerHTML = `
-            <td class="px-3 py-2 text-slate-500">${row.id}</td>
-            <td class="px-3 py-2 font-medium text-slate-900 truncate max-w-[180px]" title="${row.filename}">${row.filename}</td>
-            <td class="px-3 py-2"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">${row.method}</span></td>
-            <td class="px-3 py-2 text-right text-slate-700 font-mono">${fmt4(row.encryption_time)}</td>
-            <td class="px-3 py-2 text-right text-slate-700 font-mono">${fmt4(row.decryption_time)}</td>
-            <td class="px-3 py-2 text-right text-slate-700 font-mono">${fmt4(row.cipher_entropy)}</td>
-            <td class="px-3 py-2 text-center text-emerald-700 font-semibold">${row.psnr}</td>
-          `;
+          tr.innerHTML =
+            '<td class="px-3 py-2 text-slate-500">' +
+            row.id +
+            "</td>" +
+            '<td class="px-3 py-2 font-medium text-slate-900" title="' +
+            row.filename +
+            '" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
+            row.filename +
+            "</td>" +
+            '<td class="px-3 py-2"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">' +
+            row.method +
+            "</span></td>" +
+            '<td class="px-3 py-2 text-right font-mono text-slate-700">' +
+            fmt4(row.encryption_time) +
+            "</td>" +
+            '<td class="px-3 py-2 text-right font-mono text-slate-700">' +
+            fmt4(row.decryption_time) +
+            "</td>" +
+            '<td class="px-3 py-2 text-right font-mono text-slate-700">' +
+            fmt4(row.cipher_entropy) +
+            "</td>" +
+            '<td class="px-3 py-2 text-center font-semibold text-emerald-700">' +
+            row.psnr +
+            "</td>";
           tbody.appendChild(tr);
         });
       }
 
       function exportCSV() {
-        if (currentData.length === 0) return;
-        let csvContent = "data:text/csv;charset=utf-8,ID,Filename,Method,Encryption_Time,Decryption_Time,Cipher_Entropy,PSNR,Created_At\n";
-        currentData.forEach((r) => {
-          const row = `${r.id},"${r.filename}","${r.method}",${r.encryption_time},${r.decryption_time},${r.cipher_entropy},${r.psnr},"${r.created_at}"`;
-          csvContent += row + "\r\n";
-        });
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
+        if (!currentData.length) return;
+        var header =
+          "ID,Filename,Method,Encryption_Time,Decryption_Time,Cipher_Entropy,PSNR,Created_At\n";
+        var body = currentData
+          .map(function (r) {
+            return (
+              r.id +
+              ',"' +
+              r.filename +
+              '","' +
+              r.method +
+              '",' +
+              r.encryption_time +
+              "," +
+              r.decryption_time +
+              "," +
+              r.cipher_entropy +
+              "," +
+              r.psnr +
+              ',"' +
+              r.created_at +
+              '"'
+            );
+          })
+          .join("\r\n");
+        var uri = encodeURI("data:text/csv;charset=utf-8," + header + body);
+        var link = document.createElement("a");
+        link.setAttribute("href", uri);
         link.setAttribute("download", "agrocipher_experiment_logs.csv");
         document.body.appendChild(link);
         link.click();
