@@ -27,9 +27,9 @@ def train_default_model() -> DecisionTreeClassifier:
 
     y: list[int] = []
     for row in X:
-        if row[0] > 6.5 and row[3] > 0.3:
-            y.append(2)  # Hybrid
-        elif row[0] > 5.0:
+        if row[0] > 6.2 and row[3] > 0.2:
+            y.append(2)  # Hybrid UHC-Blowfish
+        elif row[0] > 4.8:
             y.append(1)  # Blowfish
         else:
             y.append(0)  # UHC
