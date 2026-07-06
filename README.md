@@ -87,6 +87,102 @@ Response JSON includes:
 - PSNR
 - base64-encoded encrypted payload
 
+## Batch Runner (bulk encryption)
+
+Script `client/batch_runner.py` melakukan scan rekursif pada folder dataset,
+mengirim setiap gambar ke API gateway, dan menyimpan semua metrik ke CSV.
+
+### Prasyarat
+
+```bash
+pip install requests
+```
+
+### Struktur folder
+
+```
+agrochiper/
+├── .env                  ← GATEWAY_API_KEY dibaca dari sini
+└── client/
+    └── batch_runner.py
+```
+
+API key dibaca **otomatis** dari `GATEWAY_API_KEY` di file `.env` root project.
+Tidak perlu export env var secara manual.
+
+### Penggunaan
+
+```bash
+# Minimal — scan folder dataset, output ke results_batch.csv
+python client/batch_runner.py ./dataset-daun-kopi
+
+# Dengan argumen lengkap
+python client/batch_runner.py <folder_dataset> [api_url] [output_csv]
+
+# Contoh eksplisit
+python client/batch_runner.py ./dataset \
+  http://localhost:8080/api/v1/encrypt-image \
+  hasil_eksperimen.csv
+```
+
+### Output terminal
+
+```
+.env path       : /opt/research/agrochiper/.env
+.env exists     : True
+API key len     : 64 karakter  (harus 64)
+API key end     : ...57591e0
+
+Dataset folder  : ./dataset-daun-kopi
+API endpoint    : http://localhost:8080/api/v1/encrypt-image
+Output CSV      : results_batch.csv
+Total gambar    : 120
+Akan diproses   : 120 gambar
+
+[   1/120] bercak/img_001.jpg          -> Blowfish (OK)
+[   2/120] bercak/img_002.jpg          -> Hybrid UHC-Blowfish (OK)
+...
+=============================================
+  RINGKASAN BATCH
+=============================================
+  Berhasil diproses  :    118 gambar
+  Gagal diproses     :      2 gambar
+  Total waktu batch  :   45.32 detik
+  Hasil tersimpan di : results_batch.csv
+=============================================
+```
+
+### Kolom output CSV
+
+| Kolom              | Keterangan                                                            |
+| :----------------- | :-------------------------------------------------------------------- |
+| `relative_path`    | Path relatif dari folder dataset                                      |
+| `filename`         | Nama file gambar                                                      |
+| `method`           | Algoritma yang dipilih AI: `UHC` / `Blowfish` / `Hybrid UHC-Blowfish` |
+| `decision_code`    | Kode numerik keputusan AI (0/1/2)                                     |
+| `reasoning`        | Alasan pemilihan algoritma oleh AI                                    |
+| `encryption_time`  | Waktu enkripsi (detik)                                                |
+| `decryption_time`  | Waktu dekripsi (detik)                                                |
+| `cipher_entropy`   | Entropi Shannon ciphertext (maks 8.0)                                 |
+| `psnr`             | PSNR hasil dekripsi vs asli (`∞` = lossless sempurna)                 |
+| `entropy`          | Entropi Shannon gambar asli                                           |
+| `size_kb`          | Ukuran file (KB)                                                      |
+| `glcm_correlation` | Korelasi GLCM tekstur gambar                                          |
+| `glcm_contrast`    | Kontras GLCM tekstur gambar                                           |
+| `error`            | Pesan error jika gagal (kosong jika sukses)                           |
+
+### Fitur resume
+
+Jika proses terhenti di tengah jalan (misalnya koneksi putus), jalankan
+**perintah yang sama** tanpa mengubah apapun. Script akan membaca CSV yang
+sudah ada, melewati gambar yang sudah berhasil, dan melanjutkan dari posisi
+terakhir.
+
+```bash
+# Jalankan ulang — otomatis resume, tidak memproses ulang yang sudah OK
+python client/batch_runner.py ./dataset-daun-kopi
+```
+
 ## SQLite logging
 
 The encryption service logs each request into a SQLite database (by default `/data/logs.db`):
