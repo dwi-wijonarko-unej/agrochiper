@@ -4,11 +4,14 @@
 #   DEPLOY_HOST     - IP / hostname server
 #   DEPLOY_USER     - user SSH di server (biasanya root)
 #   DEPLOY_PORT     - port SSH (default 22)
-#   DEPLOY_SSH_KEY  - isi PRIVATE key deploy (seluruh file, termasuk newline)
+#   DEPLOY_SSH_KEY  - PRIVATE key deploy dalam bentuk BASE64 (agar aman dari
+#                     masalah line-ending / whitespace saat copy-paste).
+#                     Cara buatnya di server:
+#                       base64 -w0 ~/.ssh/id_ed25519
+#                     lalu tempel SEMUA output (satu baris panjang) ke secret.
 #
-# PUBLIC key dari pasangan yang sama harus:
-#   1. ditambahkan ke server  (root: ~/.ssh/authorized_keys)
-#   2. ditambahkan sebagai GitHub Deploy Key (Settings -> Deploy keys)
+# PUBLIC key dari pasangan yang sama harus ada di:
+#   /home/<user>/.ssh/authorized_keys  (di server)
 
 name: Deploy to VPS
 
@@ -39,7 +42,11 @@ jobs:
           fi
           mkdir -p "$HOME/.ssh"
           chmod 700 "$HOME/.ssh"
-          echo "$DEPLOY_SSH_KEY" > "$HOME/.ssh/deploy_key"
+          if ! echo "$DEPLOY_SSH_KEY" | base64 -d > "$HOME/.ssh/deploy_key" 2>/dev/null; then
+            echo "Error: DEPLOY_SSH_KEY bukan base64 yang valid." >&2
+            echo "       Update secret dengan:  base64 -w0 ~/.ssh/id_ed25519" >&2
+            exit 1
+          fi
           chmod 600 "$HOME/.ssh/deploy_key"
           port="${DEPLOY_PORT:-22}"
           ssh -i "$HOME/.ssh/deploy_key" \
