@@ -48,6 +48,12 @@ jobs:
             exit 1
           fi
           chmod 600 "$HOME/.ssh/deploy_key"
+          if ! grep -q "BEGIN.*PRIVATE KEY" "$HOME/.ssh/deploy_key"; then
+            echo "Error: DEPLOY_SSH_KEY bukan PRIVATE key." >&2
+            echo "       Sepertinya key publik (.pub) ter-copy. Gunakan:" >&2
+            echo "       base64 -w0 ~/.ssh/id_ed25519    (tanpa .pub!)" >&2
+            exit 1
+          fi
           port="${DEPLOY_PORT:-22}"
           ssh -i "$HOME/.ssh/deploy_key" \
               -o StrictHostKeyChecking=accept-new \
