@@ -1,0 +1,49 @@
+# Deploy AgroCipher otomatis ke VPS saat push ke branch main.
+#
+# Diperlukan secret GitHub (repo Settings -> Secrets and variables -> Actions):
+#   DEPLOY_HOST     - IP / hostname server
+#   DEPLOY_USER     - user SSH di server (biasanya root)
+#   DEPLOY_PORT     - port SSH (default 22)
+#   DEPLOY_SSH_KEY  - isi PRIVATE key deploy (seluruh file, termasuk newline)
+#
+# PUBLIC key dari pasangan yang sama harus:
+#   1. ditambahkan ke server  (root: ~/.ssh/authorized_keys)
+#   2. ditambahkan sebagai GitHub Deploy Key (Settings -> Deploy keys)
+
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy via SSH
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: SSH & deploy ke server
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$DEPLOY_HOST" ] || [ -z "$DEPLOY_USER" ]; then
+            echo "Levari: pastikan secret DEPLOY_HOST & DEPLOY_USER sudah di-set." >&2
+            exit 1
+          fi
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          echo "$DEPLOY_SSH_KEY" > "$HOME/.ssh/deploy_key"
+          chmod 600 "$HOME/.ssh/deploy_key"
+          port="${DEPLOY_PORT:-22}"
+          ssh -i "$HOME/.ssh/deploy_key" \
+              -o StrictHostKeyChecking=accept-new \
+              -p "$port" \
+              "${DEPLOY_USER}@${DEPLOY_HOST}" \
+              'cd /opt/agrochiper && bash deploy/deploy.sh'

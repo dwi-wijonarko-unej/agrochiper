@@ -1,0 +1,24 @@
+# Secrets & local configuration
+.env
+
+# Model artifacts
+*.pkl
+
+# Experiment data & datasets
+data/
+*.csv
+dataset/
+dataset*/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Go build artifacts
+gateway/coffee-gateway
+
+# OS / editor junk
+.DS_Store
+*.Zone.Identifier
