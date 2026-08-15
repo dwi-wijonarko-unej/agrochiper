@@ -1,0 +1,9 @@
+{
+  "images_dir": "data/experiment_dataset_v2",
+  "n_images": 40,
+  "vus": "1,5,10,20",
+  "duration_s": 120,
+  "warmup_s": 10,
+  "seed": 42,
+  "context": "single-node Docker Compose, uvicorn single worker"
+}

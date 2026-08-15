@@ -12,6 +12,10 @@ services:
       FEATURE_SERVICE_URL: http://feature-service:8081
       SELECTOR_SERVICE_URL: http://selector-service:8082
       ENCRYPTION_SERVICE_URL: http://encryption-service:8083
+      EXPERIMENT_MODE: ${EXPERIMENT_MODE:-false}
+      GATEWAY_EXPERIMENT_LOG: /experiment/gateway_experiment.jsonl
+    volumes:
+      - ./data/experiment/gateway:/experiment
     depends_on:
       - feature-service
       - selector-service
@@ -23,6 +27,10 @@ services:
     container_name: coffee-feature-service
     ports:
       - "8081:8081"
+    environment:
+      EXPERIMENT_DB_PATH: /experiment/experiment_logs.db
+    volumes:
+      - ./data/experiment/feature:/experiment
     restart: unless-stopped
 
   selector-service:
@@ -30,6 +38,10 @@ services:
     container_name: coffee-selector-service
     ports:
       - "8082:8082"
+    environment:
+      EXPERIMENT_DB_PATH: /experiment/experiment_logs.db
+    volumes:
+      - ./data/experiment/selector:/experiment
     restart: unless-stopped
 
   encryption-service:
@@ -39,8 +51,11 @@ services:
       - "8083:8083"
     env_file:
       - .env
+    environment:
+      EXPERIMENT_DB_PATH: /experiment/experiment_logs.db
     volumes:
       - ./data/encryption:/data
+      - ./data/experiment/encryption:/experiment
     restart: unless-stopped
 
   web:

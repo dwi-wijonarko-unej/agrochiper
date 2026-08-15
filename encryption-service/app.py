@@ -23,6 +23,7 @@ DB_PATH = os.getenv("DB_PATH", "logs.db")
 SECRET_KEY = os.getenv("SECRET_KEY", "kunci_rahasia_16b").encode("utf-8")
 PWD1 = int(os.getenv("UHC_MATRIX_SIZE", "16"))
 PWD2 = os.getenv("UHC_PASSWORD2", "7391")
+EXPERIMENT_DB_PATH = os.getenv("EXPERIMENT_DB_PATH", "experiment_logs.db")
 
 # Initialize SQLite
 conn = sqlite3.connect(DB_PATH, check_same_thread=False)
@@ -42,6 +43,86 @@ cur.execute(
     """
 )
 conn.commit()
+
+# Experiment logging DB (fail-open; logging must never break encryption).
+try:
+    exp_conn = sqlite3.connect(EXPERIMENT_DB_PATH, check_same_thread=False)
+    exp_cur = exp_conn.cursor()
+    exp_cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS crypto_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            request_id TEXT,
+            timestamp_utc TEXT,
+            method TEXT,
+            encryption_time_ms REAL,
+            decryption_time_ms REAL,
+            cipher_entropy REAL,
+            psnr TEXT,
+            psnr_is_infinite INTEGER,
+            decrypt_verified INTEGER,
+            encrypted_payload_size_bytes INTEGER,
+            original_payload_size_bytes INTEGER,
+            processing_time_ms REAL,
+            status TEXT,
+            error_message TEXT
+        )
+        """
+    )
+    exp_conn.commit()
+except Exception:
+    exp_conn = None
+    exp_cur = None
+
+
+def log_crypto(
+    request_id: str,
+    method: str,
+    enc_ms: float,
+    dec_ms: float,
+    cipher_entropy: float,
+    psnr: str,
+    psnr_is_infinite: bool,
+    decrypt_verified: bool,
+    encrypted_size: int,
+    original_size: int,
+    processing_ms: float,
+    status: str,
+    error_message: str,
+) -> None:
+    """Insert one crypto-log row. Best effort only."""
+    if exp_cur is None:
+        return
+    try:
+        exp_cur.execute(
+            """
+            INSERT INTO crypto_logs
+            (request_id, timestamp_utc, method, encryption_time_ms, decryption_time_ms,
+             cipher_entropy, psnr, psnr_is_infinite, decrypt_verified,
+             encrypted_payload_size_bytes, original_payload_size_bytes,
+             processing_time_ms, status, error_message)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                request_id,
+                time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                method,
+                enc_ms,
+                dec_ms,
+                cipher_entropy,
+                psnr,
+                1 if psnr_is_infinite else 0,
+                1 if decrypt_verified else 0,
+                encrypted_size,
+                original_size,
+                processing_ms,
+                status,
+                error_message,
+            ),
+        )
+        exp_conn.commit()
+    except Exception:
+        pass
 
 
 def logistic_map(x0: float, banyak: int) -> np.ndarray:
@@ -161,117 +242,153 @@ def get_logs():
 
 
 @app.post("/encryption/v1/process")
-async def process(file: UploadFile = File(...), cipher_mode: str = Form(...)):
-    data = await file.read()
+async def process(
+    file: UploadFile = File(...),
+    cipher_mode: str = Form(...),
+    request_id: str = Form(""),
+):
+    started = time.perf_counter()
+    request_id = request_id or ""
 
-    img = Image.open(io.BytesIO(data)).convert("RGB")
-    img_arr = np.array(img)
-    width, height = img.size
-    img_bytes = img.tobytes()
+    try:
+        data = await file.read()
 
-    n_uhc = PWD1
-    x0_uhc = float("0." + PWD2 + "1")
+        img = Image.open(io.BytesIO(data)).convert("RGB")
+        img_arr = np.array(img)
+        width, height = img.size
+        img_bytes = img.tobytes()
+        original_size = len(img_bytes)
 
-    # Encryption
-    start_enc = time.perf_counter()
+        n_uhc = PWD1
+        x0_uhc = float("0." + PWD2 + "1")
 
-    if cipher_mode == "UHC":
-        key_mat = generate_key_matrix(n_uhc, x0_uhc, "e")
-        pad_len = (n_uhc - len(img_bytes) % n_uhc) % n_uhc
-        img_padded = np.pad(
-            np.frombuffer(img_bytes, dtype=np.uint8),
-            (0, pad_len),
-            "constant",
+        # Encryption
+        start_enc = time.perf_counter()
+
+        if cipher_mode == "UHC":
+            key_mat = generate_key_matrix(n_uhc, x0_uhc, "e")
+            pad_len = (n_uhc - len(img_bytes) % n_uhc) % n_uhc
+            img_padded = np.pad(
+                np.frombuffer(img_bytes, dtype=np.uint8),
+                (0, pad_len),
+                "constant",
+            )
+            enc_bytes = hill_multiply(img_padded, key_mat, n_uhc).tobytes()
+            payload = (
+                struct.pack("II", width, height)
+                + b"UHC"
+                + struct.pack("I", pad_len)
+                + enc_bytes
+            )
+        elif cipher_mode == "Blowfish":
+            enc_bytes = process_blowfish(img_bytes, "encrypt")
+            payload = struct.pack("II", width, height) + b"BLO" + enc_bytes
+        else:  # Hybrid
+            key_mat = generate_key_matrix(n_uhc, x0_uhc, "e")
+            pad_len = (n_uhc - len(img_bytes) % n_uhc) % n_uhc
+            img_padded = np.pad(
+                np.frombuffer(img_bytes, dtype=np.uint8),
+                (0, pad_len),
+                "constant",
+            )
+            uhc_enc = hill_multiply(img_padded, key_mat, n_uhc)
+            blw_enc = process_blowfish(uhc_enc.tobytes(), "encrypt")
+            payload = (
+                struct.pack("II", width, height)
+                + b"HYB"
+                + struct.pack("I", pad_len)
+                + blw_enc
+            )
+
+        end_enc = time.perf_counter()
+        encrypted_size = len(payload)
+
+        # Decryption + verify
+        start_dec = time.perf_counter()
+
+        bio = io.BytesIO(payload)
+        r_w, r_h = struct.unpack("II", bio.read(8))
+        method_tag = bio.read(3)
+
+        if method_tag == b"UHC":
+            pad_len = struct.unpack("I", bio.read(4))[0]
+            enc_data = bio.read()
+            _, inv_mat = generate_key_matrix(n_uhc, x0_uhc, "d")
+            dec_padded = hill_multiply(
+                np.frombuffer(enc_data, dtype=np.uint8), inv_mat, n_uhc
+            )
+            final_bytes = dec_padded[: len(dec_padded) - pad_len].tobytes()
+        elif method_tag == b"BLO":
+            final_bytes = process_blowfish(bio.read(), "decrypt")
+        else:  # HYB
+            pad_len = struct.unpack("I", bio.read(4))[0]
+            dec_blw = process_blowfish(bio.read(), "decrypt")
+            _, inv_mat = generate_key_matrix(n_uhc, x0_uhc, "d")
+            dec_padded = hill_multiply(
+                np.frombuffer(dec_blw, dtype=np.uint8), inv_mat, n_uhc
+            )
+            final_bytes = dec_padded[: len(dec_padded) - pad_len].tobytes()
+
+        end_dec = time.perf_counter()
+
+        final_img_arr = np.frombuffer(final_bytes, dtype=np.uint8).reshape(r_h, r_w, 3)
+
+        mse = np.mean((img_arr.astype(float) - final_img_arr.astype(float)) ** 2)
+        psnr = "∞" if mse == 0 else str(round(20 * np.log10(255.0 / np.sqrt(mse)), 2))
+        psnr_is_infinite = bool(mse == 0)
+        decrypt_verified = bool(mse == 0)
+
+        cipher_bytes = np.frombuffer(payload, dtype=np.uint8)
+        hist_c, _ = np.histogram(cipher_bytes, bins=256, range=(0, 256))
+        prob_c = hist_c / hist_c.sum()
+        prob_c = prob_c[prob_c > 0]
+        cipher_entropy = float(-np.sum(prob_c * np.log2(prob_c)))
+
+        enc_time = round(end_enc - start_enc, 4)
+        dec_time = round(end_dec - start_dec, 4)
+        enc_ms = round((end_enc - start_enc) * 1000.0, 4)
+        dec_ms = round((end_dec - start_dec) * 1000.0, 4)
+        cipher_ent = float(cipher_entropy)
+
+        # Log to SQLite (production table — unchanged contract)
+        cur.execute(
+            """
+            INSERT INTO encryption_logs
+            (filename, method, encryption_time, decryption_time, cipher_entropy, psnr)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (file.filename, cipher_mode, enc_time, dec_time, cipher_ent, psnr),
         )
-        enc_bytes = hill_multiply(img_padded, key_mat, n_uhc).tobytes()
-        payload = (
-            struct.pack("II", width, height)
-            + b"UHC"
-            + struct.pack("I", pad_len)
-            + enc_bytes
-        )
-    elif cipher_mode == "Blowfish":
-        enc_bytes = process_blowfish(img_bytes, "encrypt")
-        payload = struct.pack("II", width, height) + b"BLO" + enc_bytes
-    else:  # Hybrid
-        key_mat = generate_key_matrix(n_uhc, x0_uhc, "e")
-        pad_len = (n_uhc - len(img_bytes) % n_uhc) % n_uhc
-        img_padded = np.pad(
-            np.frombuffer(img_bytes, dtype=np.uint8),
-            (0, pad_len),
-            "constant",
-        )
-        uhc_enc = hill_multiply(img_padded, key_mat, n_uhc)
-        blw_enc = process_blowfish(uhc_enc.tobytes(), "encrypt")
-        payload = (
-            struct.pack("II", width, height)
-            + b"HYB"
-            + struct.pack("I", pad_len)
-            + blw_enc
+        conn.commit()
+
+        # Experiment log (fail-open)
+        log_crypto(
+            request_id, cipher_mode, enc_ms, dec_ms, cipher_ent, psnr,
+            psnr_is_infinite, decrypt_verified, encrypted_size, original_size,
+            round((time.perf_counter() - started) * 1000.0, 4),
+            "ok", "",
         )
 
-    end_enc = time.perf_counter()
-
-    # Decryption + verify
-    start_dec = time.perf_counter()
-
-    bio = io.BytesIO(payload)
-    r_w, r_h = struct.unpack("II", bio.read(8))
-    method_tag = bio.read(3)
-
-    if method_tag == b"UHC":
-        pad_len = struct.unpack("I", bio.read(4))[0]
-        enc_data = bio.read()
-        _, inv_mat = generate_key_matrix(n_uhc, x0_uhc, "d")
-        dec_padded = hill_multiply(
-            np.frombuffer(enc_data, dtype=np.uint8), inv_mat, n_uhc
+        return {
+            "method": cipher_mode,
+            "encryption_time": enc_time,
+            "decryption_time": dec_time,
+            "cipher_entropy": cipher_ent,
+            "psnr": psnr,
+            "output_filename": file.filename + ".dat",
+            "cipher_base64": base64.b64encode(payload).decode("utf-8"),
+            "request_id": request_id,
+            "encryption_time_ms": enc_ms,
+            "decryption_time_ms": dec_ms,
+            "psnr_is_infinite": psnr_is_infinite,
+            "decrypt_verified": decrypt_verified,
+            "encrypted_payload_size_bytes": encrypted_size,
+            "original_payload_size_bytes": original_size,
+        }
+    except Exception as e:
+        log_crypto(
+            request_id, cipher_mode, 0.0, 0.0, 0.0, "", False, False, 0, 0,
+            round((time.perf_counter() - started) * 1000.0, 4),
+            "error", str(e),
         )
-        final_bytes = dec_padded[: len(dec_padded) - pad_len].tobytes()
-    elif method_tag == b"BLO":
-        final_bytes = process_blowfish(bio.read(), "decrypt")
-    else:  # HYB
-        pad_len = struct.unpack("I", bio.read(4))[0]
-        dec_blw = process_blowfish(bio.read(), "decrypt")
-        _, inv_mat = generate_key_matrix(n_uhc, x0_uhc, "d")
-        dec_padded = hill_multiply(
-            np.frombuffer(dec_blw, dtype=np.uint8), inv_mat, n_uhc
-        )
-        final_bytes = dec_padded[: len(dec_padded) - pad_len].tobytes()
-
-    end_dec = time.perf_counter()
-
-    final_img_arr = np.frombuffer(final_bytes, dtype=np.uint8).reshape(r_h, r_w, 3)
-
-    mse = np.mean((img_arr.astype(float) - final_img_arr.astype(float)) ** 2)
-    psnr = "∞" if mse == 0 else str(round(20 * np.log10(255.0 / np.sqrt(mse)), 2))
-
-    cipher_bytes = np.frombuffer(payload, dtype=np.uint8)
-    hist_c, _ = np.histogram(cipher_bytes, bins=256, range=(0, 256))
-    prob_c = hist_c / hist_c.sum()
-    prob_c = prob_c[prob_c > 0]
-    cipher_entropy = float(-np.sum(prob_c * np.log2(prob_c)))
-
-    enc_time = round(end_enc - start_enc, 4)
-    dec_time = round(end_dec - start_dec, 4)
-    cipher_ent = round(cipher_entropy, 4)
-
-    # Log to SQLite
-    cur.execute(
-        """
-        INSERT INTO encryption_logs
-        (filename, method, encryption_time, decryption_time, cipher_entropy, psnr)
-        VALUES (?, ?, ?, ?, ?, ?)
-        """,
-        (file.filename, cipher_mode, enc_time, dec_time, cipher_ent, psnr),
-    )
-    conn.commit()
-
-    return {
-        "method": cipher_mode,
-        "encryption_time": enc_time,
-        "decryption_time": dec_time,
-        "cipher_entropy": cipher_ent,
-        "psnr": psnr,
-        "output_filename": file.filename + ".dat",
-        "cipher_base64": base64.b64encode(payload).decode("utf-8"),
-    }
+        raise

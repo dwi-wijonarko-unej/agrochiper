@@ -1,0 +1,7 @@
+{
+  "chi2_crit_255_alpha005": 292.982,
+  "blowfish_iv_note": "IV tetap b'\\x00'*8 hanya untuk uji differential offline; runtime service memakai os.urandom(8)",
+  "npcr_uaci_notes": "1-byte flip (pixel(0,0) ch R); plaintext vs variant, mode enkripsi sama, panjang identik",
+  "baseline_npcr_mean": 5.9339735243055555e-05,
+  "baseline_uaci_mean": 4.2452012271922654e-05
+}

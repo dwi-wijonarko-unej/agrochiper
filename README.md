@@ -183,6 +183,22 @@ terakhir.
 python client/batch_runner.py ./dataset-daun-kopi
 ```
 
+## Inkorporasi & data eksperimen
+
+Mulai versi ini, sistem memiliki instrumentasi eksperimen (fail-open) untuk
+menghubungkan seluruh request via `request_id` dan menulis log per-service:
+
+- `feature_logs` (feature-service), `selector_logs` (selector-service),
+  `crypto_logs` (encryption-service) di SQLite, dan JSONL gateway
+  (`GATEWAY_EXPERIMENT_LOG`). Lihat `docs/EXPERIMENT_DATA.md` untuk kolom & satuan.
+- Export ke CSV: `python analysis/export_experiment_data.py` → `results/exported/`.
+- `client/batch_runner.py` mode eksperimen:
+  `python client/batch_runner.py <dataset> --experiment-id EXP-001 --warmup 10 --repeat 3 --resume`.
+- Mode forced-method (baseline evaluasi) hanya aktif bila `EXPERIMENT_MODE=true`
+  di `.env`: header `X-Experiment-Force-Method: UHC|Blowfish|Hybrid UHC-Blowfish|adaptive`.
+- Rencana eksperimen dan penulisan Bab 4: `docs/CHAPTER4_PLAN.md`, audit awal:
+  `EXPERIMENT_AUDIT.md`.
+
 ## SQLite logging
 
 The encryption service logs each request into a SQLite database (by default `/data/logs.db`):

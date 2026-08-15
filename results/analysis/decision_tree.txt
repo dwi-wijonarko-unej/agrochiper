@@ -1,0 +1,10 @@
+|--- entropy <= 4.78
+|   |--- class: UHC
+|--- entropy >  4.78
+|   |--- entropy <= 6.24
+|   |   |--- class: Blowfish
+|   |--- entropy >  6.24
+|   |   |--- glcm_contrast <= 0.23
+|   |   |   |--- class: Blowfish
+|   |   |--- glcm_contrast >  0.23
+|   |   |   |--- class: Hybrid UHC-Blowfish
