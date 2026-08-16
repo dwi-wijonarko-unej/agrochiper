@@ -9,8 +9,8 @@
 > `PAPER_DATASET.csv`, `PAPER_TABLES.xlsx`, `FIGURE_DATA/`). Hasil v1 (750 citra)
 > diarsipkan di `results/archive_v1/` dan TIDAK dipakai di Bab ini.
 >
-> **Ringkasan integritas**: seluruh 12.670 request utama (EXP-001+EXP-002)
-> berhasil (`http_status=200`, `success=1`) dan seluruhnya **lossless
+> **Ringkasan integritas**: seluruh 19.838 request utama (EXP-001 8.502 +
+> EXP-002 11.336) berhasil (`http_status=200`, `success=1`) dan seluruhnya **lossless
 > recovery** (`psnr="∞"`, `decrypt_verified=True`). Tidak ada request gagal.
 
 ---
@@ -185,7 +185,7 @@ demi performa pada subpopulasi entropi-rendah — bukan bukti superioritas.
 
 ### 3.4.3 Fidelity dekripsi
 
-Seluruh request (EXP-001 + EXP-002 = 12.670 request utama) menghasilkan
+Seluruh request (EXP-001 8.502 + EXP-002 11.336 = 19.838 request utama) menghasilkan
 `decrypt_verified=True` dan PSNR `∞` → **lossless recovery rate = 100%**.
 PSNR hanya membuktikan fidelity, bukan keamanan (sesuai batasan).
 

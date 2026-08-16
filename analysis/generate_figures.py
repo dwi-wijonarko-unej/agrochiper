@@ -5,12 +5,14 @@ Figures:
   fig1_selector_scatter.png   entropy vs GLCM contrast colored by selector decision
   fig2_method_performance.png encryption/decryption/e2e latency bars + cipher entropy line
   fig3_ciphertext_quality.png multi-panel (entropy, adjacent corr, NPCR, UACI)
+  fig4_load_test.png          throughput + latency percentiles vs virtual users
 
 Inputs (repo-relative):
   results/EXP-001/raw_batch_results.csv
   results/analysis/method_comparison.csv
   results/EXP-003/crypto_metrics_summary.csv
   results/EXP-003/npcr_uaci.csv
+  results/EXP-004/load_test_summary.csv
   data/experiment_dataset_v2/**/*.jpg   (baseline byte metrics)
 
 Output: results/FIGURES/
@@ -239,8 +241,49 @@ def fig3_ciphertext_quality():
     print("fig3_ciphertext_quality.png")
 
 
+# ----------------------------------------------------------------------------
+# Figure 4: load test — throughput and p95 latency vs virtual users
+# ----------------------------------------------------------------------------
+def fig4_load_test():
+    rows = read_csv(os.path.join(REPO, "results", "EXP-004", "load_test_summary.csv"))
+    vu = [int(r["vu"]) for r in rows]
+    thr = [float(r["throughput_req_per_s"]) for r in rows]
+    p50 = [float(r["latency_median_ms"]) for r in rows]
+    p95 = [float(r["latency_p95_ms"]) for r in rows]
+    p99 = [float(r["latency_p99_ms"]) for r in rows]
+
+    fig, axes = plt.subplots(1, 2, figsize=(7.6, 3.6), gridspec_kw={"width_ratios": [1, 1]})
+
+    ax = axes[0]
+    ax.plot(vu, thr, "-o", color=COLORS["Blowfish"], lw=1.8, ms=5)
+    for x, y in zip(vu, thr):
+        ax.annotate(f"{y:.2f}", (x, y), textcoords="offset points",
+                    xytext=(0, 7), ha="center", fontsize=7)
+    ax.set_xlabel("Virtual users")
+    ax.set_ylabel("Throughput (requests/s)")
+    ax.set_xticks(vu)
+    ax.set_title("(a) Throughput")
+
+    ax = axes[1]
+    ax.plot(vu, p50, "-o", color=COLORS["UHC"], lw=1.6, ms=4, label="p50")
+    ax.plot(vu, p95, "-o", color=COLORS["Hybrid UHC-Blowfish"], lw=1.6, ms=4, label="p95")
+    ax.plot(vu, p99, "-s", color=COLORS["Adaptive"], lw=1.4, ms=4, label="p99")
+    ax.set_xlabel("Virtual users")
+    ax.set_ylabel("Latency (ms)")
+    ax.set_xticks(vu)
+    ax.legend(frameon=False, ncol=3, loc="upper left")
+    ax.set_title("(b) Latency percentiles")
+
+    fig.suptitle("Microservices load test (EXP-004, 120 s per scenario)", fontsize=10, y=0.99)
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
+    fig.savefig(os.path.join(OUT, "fig4_load_test.png"), dpi=DPI)
+    plt.close(fig)
+    print("fig4_load_test.png")
+
+
 if __name__ == "__main__":
     fig1_selector_scatter()
     fig2_method_performance()
     fig3_ciphertext_quality()
+    fig4_load_test()
     print("All figures written to", OUT)
