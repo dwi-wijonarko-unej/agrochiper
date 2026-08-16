@@ -11,6 +11,9 @@ dataset/
 dataset*/
 results/
 
+# Experiment artifacts (large binary ciphertexts)
+results/**/*.bin
+
 # Python
 __pycache__/
 *.pyc
