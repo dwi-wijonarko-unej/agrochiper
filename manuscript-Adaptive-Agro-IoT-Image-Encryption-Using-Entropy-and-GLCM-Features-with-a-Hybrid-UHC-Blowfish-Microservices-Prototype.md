@@ -64,13 +64,21 @@ As shown in **Table 1**, the dataset provides both class coverage and source-lev
 
 The prototype was deployed in a single-node Docker Compose environment. It consists of: (1) a Go-based gateway that authenticates and orchestrates requests; (2) a Python/FastAPI feature-service that extracts entropy, file size, GLCM correlation, and GLCM contrast; (3) a Python/FastAPI selector-service that applies a Decision Tree; and (4) a Python/FastAPI encryption-service that performs UHC, Blowfish, or Hybrid UHC-Blowfish encryption, decrypt-verification, and SQLite logging. A batch runner recursively submits image files to the gateway and stores experiment-level outputs in CSV files.
 
-### 2.2 Adaptive Encryption Workflow
+### 2.2 Research Workflow
+
+The study follows the workflow shown in **Figure 3**, which integrates the dataset, the processing services, and the evaluation pipeline into a single reproducible flow. The workflow begins with dataset preparation, in which raw coffee leaf images are collected, labelled, and organized into class folders. Preprocessing then normalizes each image by converting it to RGB JPEG and resizing it to a maximum dimension of 1,024 px. In the feature-extraction stage, the feature-service computes entropy, file size, GLCM correlation, and GLCM contrast for every image. These features feed the adaptive-selection stage, in which a Decision Tree routes each image to UHC, Blowfish, or Hybrid UHC-Blowfish. The selected method is then applied in the image-encryption stage, and every encrypted payload is immediately decrypt-verified to confirm lossless recovery. The same pipeline is executed repeatedly by the batch runner, producing per-image results that are stored as CSV files in the batch-execution and log-collection stages. Finally, the statistical-analysis stage aggregates the stored results into the method-comparison, ciphertext-quality, and load-test summaries discussed in Section 3.
+
+[INSERT results/FIGURES/fig3_research_workflow.png HERE]
+
+**Figure 3.** Research workflow from coffee disease image dataset preparation, feature extraction, adaptive selection, and encryption-decryption verification to batch result logging.
+
+### 2.3 Adaptive Encryption Workflow
 
 For each uploaded image, the gateway forwards the payload to the feature-service. The feature-service computes entropy, file size, GLCM correlation, and GLCM contrast. The selector-service then uses these features to select one encryption route. The encryption-service executes the selected route, decrypts the payload for verification, computes relevant output metrics, persists its logs, and returns the response through the gateway. Batch processing adds request-level identifiers and stores the returned results for later analysis.
 
 The workflow is evaluated as a system pipeline rather than as four unrelated components. The implementation records method selection, encryption and decryption time, ciphertext entropy, PSNR, verification status, and request outcome. This design makes it possible to compare cryptographic outcomes with the cost of service-based processing.
 
-### 2.3 Experiment Design and Metrics
+### 2.4 Experiment Design and Metrics
 
 The evaluation was divided into four experiment series. **Table 2** summarizes the purpose and configuration of each series. Separating the experiments prevents metrics obtained under adaptive routing, forced-method baselines, ciphertext sampling, and concurrent load from being interpreted as if they were generated under one identical condition.
 
@@ -105,11 +113,11 @@ The dataset exhibited substantial image-level variation. Mean entropy values ran
 
 **Table 3** shows that Blowfish is selected for most images. UHC is associated with the lowest entropy and contrast values, whereas Hybrid UHC-Blowfish is selected for a smaller high-entropy, high-contrast, and larger-size subgroup. The fitted Decision Tree uses entropy as the primary split and GLCM contrast as the secondary split for the Hybrid branch; its feature importance values are 0.869 for entropy and 0.131 for GLCM contrast, with zero contribution from size and GLCM correlation in the final tree.
 
-The relationship between these features and selected methods is visualized in **Figure 3**. The figure should display entropy against GLCM contrast using a separate color for each decision. It is intended to show the selector’s routing regions: low-entropy images in the UHC region, most moderate-to-high entropy images in the Blowfish region, and high-entropy/high-contrast images in the Hybrid region.
+The relationship between these features and selected methods is visualized in **Figure 4**. The figure should display entropy against GLCM contrast using a separate color for each decision. It is intended to show the selector’s routing regions: low-entropy images in the UHC region, most moderate-to-high entropy images in the Blowfish region, and high-entropy/high-contrast images in the Hybrid region.
 
 [INSERT results/FIGURES/fig1_selector_scatter.png HERE]
 
-**Figure 3.** Entropy and GLCM-contrast distribution of images grouped by AI Selector decision.
+**Figure 4.** Entropy and GLCM-contrast distribution of images grouped by AI Selector decision.
 
 The selector labels are generated by a rule-derived Decision Tree and do not represent a ground-truth “best encryption method” label. Thus, the results describe routing behavior and its relationship to image characteristics; they do not constitute a classification-accuracy result.
 
@@ -128,11 +136,11 @@ The forced-method experiment compared UHC, Blowfish, Hybrid UHC-Blowfish, and Ad
 
 As presented in **Table 4**, Blowfish has the lowest encryption and decryption time while attaining near-maximum ciphertext entropy. Hybrid UHC-Blowfish attains similar entropy but incurs the largest runtime because it combines two transformation stages. Adaptive routing is faster than Hybrid but slower than Blowfish because its workload includes UHC, Blowfish, and Hybrid decisions. Its lower ciphertext entropy reflects the 20.57% of images routed to UHC, which makes the adaptive result an explicit security-performance trade-off rather than evidence of universal superiority.
 
-**Figure 4** should compare encryption time, decryption time, end-to-end latency, and ciphertext entropy for the four scenarios. A multi-panel bar chart or a combined bar-and-line chart is suitable because it allows the reader to compare processing cost and ciphertext entropy without reading each table value individually.
+**Figure 5** should compare encryption time, decryption time, end-to-end latency, and ciphertext entropy for the four scenarios. A multi-panel bar chart or a combined bar-and-line chart is suitable because it allows the reader to compare processing cost and ciphertext entropy without reading each table value individually.
 
 [INSERT results/FIGURES/fig2_method_performance.png HERE]
 
-**Figure 4.** Runtime and ciphertext-entropy comparison among UHC, Blowfish, Hybrid UHC-Blowfish, and Adaptive routing.
+**Figure 5.** Runtime and ciphertext-entropy comparison among UHC, Blowfish, Hybrid UHC-Blowfish, and Adaptive routing.
 
 All methods achieved 100% decrypt-verification and infinite PSNR. Accordingly, performance differences in **Table 4** concern computational cost and ciphertext behavior rather than loss of image content after decryption.
 
@@ -150,11 +158,11 @@ Runtime results do not fully describe the diffusion behavior of encrypted payloa
 
 The results in **Table 5** separate UHC from the two Blowfish-containing methods. Blowfish and Hybrid UHC-Blowfish approach maximum entropy, have near-zero adjacent-byte correlation, and pass the uniformity test for more than 93% of sampled payloads. They also produce NPCR and UACI values near the expected diffusion range after a one-byte image modification. In contrast, UHC has lower entropy, positive correlation, and negligible NPCR/UACI values. This indicates weak one-byte avalanche in the tested UHC implementation and provides the main empirical rationale for the hybrid design: the Blowfish layer substantially improves diffusion.
 
-**Figure 5** should present the indicators in **Table 5** as a compact multi-panel figure. The recommended panels are entropy, adjacent-byte correlation, NPCR, and UACI. This presentation should emphasize the contrast between UHC and the Blowfish-containing routes while avoiding decorative images unrelated to the measured data.
+**Figure 6** should present the indicators in **Table 5** as a compact multi-panel figure. The recommended panels are entropy, adjacent-byte correlation, NPCR, and UACI. This presentation should emphasize the contrast between UHC and the Blowfish-containing routes while avoiding decorative images unrelated to the measured data.
 
 [INSERT results/FIGURES/fig3_ciphertext_quality.png HERE]
 
-**Figure 5.** Ciphertext entropy, adjacent-byte correlation, NPCR, and UACI across UHC, Blowfish, and Hybrid UHC-Blowfish.
+**Figure 6.** Ciphertext entropy, adjacent-byte correlation, NPCR, and UACI across UHC, Blowfish, and Hybrid UHC-Blowfish.
 
 Payload expansion is negligible for all tested methods, remaining close to 1.0. Therefore, the measured difference among methods is primarily cryptographic behavior and runtime, not transmission-size overhead.
 
@@ -173,11 +181,11 @@ The load experiment evaluated the single-node prototype using 1, 5, 10, and 20 v
 
 As shown in **Table 6**, throughput increases from 3.58 requests/s at one virtual user and then saturates at approximately 4.6–5.0 requests/s. In contrast, p95 latency rises sharply as concurrency increases. Encryption-service CPU utilization remains higher than that of the gateway, feature-service, and selector-service, identifying encryption as the primary bottleneck in this single-worker deployment. The zero error rate indicates that the prototype continued to accept requests under the tested load, although waiting time increased.
 
-**Figure 6** should plot throughput and p95 latency against virtual-user level. The two metrics should use separate panels or clearly separated axes because their scales differ substantially. The intended interpretation is that the prototype saturates in throughput while its response time grows with concurrent demand.
+**Figure 7** should plot throughput and p95 latency against virtual-user level. The two metrics should use separate panels or clearly separated axes because their scales differ substantially. The intended interpretation is that the prototype saturates in throughput while its response time grows with concurrent demand.
 
 [INSERT results/FIGURES/fig4_load_test.png HERE]
 
-**Figure 6.** Throughput and p95 latency across virtual-user levels in the microservices load test.
+**Figure 7.** Throughput and p95 latency across virtual-user levels in the microservices load test.
 
 Taken together, the results show that the prototype performs feature extraction, selection, encryption, verification, and logging consistently in a service-based pipeline. The selector produces distinct routing groups based mainly on entropy and GLCM contrast; Blowfish and Hybrid provide substantially stronger ciphertext diffusion than UHC; and the encryption-service is the main performance bottleneck under concurrent load. These results remain limited to a rule-derived selector and a single-node Docker Compose environment. They should not be generalized as evidence of ground-truth selector accuracy, full cryptographic proof, or horizontal scalability. Experiment artifacts, including request-linked CSV files, SQLite logs, ciphertext samples, configuration metadata, and the audit commit, were retained to support reproducibility.
 

@@ -6,6 +6,7 @@ Figures:
   fig2_method_performance.png encryption/decryption/e2e latency bars + cipher entropy line
   fig3_ciphertext_quality.png multi-panel (entropy, adjacent corr, NPCR, UACI)
   fig4_load_test.png          throughput + latency percentiles vs virtual users
+  fig3_research_workflow.png  black-and-white methodology workflow diagram
 
 Inputs (repo-relative):
   results/EXP-001/raw_batch_results.csv
@@ -281,7 +282,56 @@ def fig4_load_test():
     print("fig4_load_test.png")
 
 
+# ----------------------------------------------------------------------------
+# Figure (methodology): black-and-white research workflow diagram
+# ----------------------------------------------------------------------------
+def fig3_research_workflow():
+    stages = [
+        "Dataset preparation",
+        "Preprocessing",
+        "Feature extraction",
+        "Adaptive selection",
+        "Image encryption",
+        "Decrypt-verify",
+        "Batch execution",
+        "Log collection",
+        "Statistical analysis",
+    ]
+
+    fig, ax = plt.subplots(figsize=(4.6, 8.6))
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+
+    box_w = 0.52
+    box_h = 0.082
+    gap = 0.026
+    cx = 0.5
+    top = 0.97
+    n = len(stages)
+    centers = [top - box_h / 2 - i * (box_h + gap) for i in range(n)]
+
+    for i, (label, cy) in enumerate(zip(stages, centers)):
+        rect = plt.Rectangle((cx - box_w / 2, cy - box_h / 2), box_w, box_h,
+                             facecolor="white", edgecolor="black", lw=1.2,
+                             zorder=2)
+        ax.add_patch(rect)
+        ax.text(cx, cy, label, ha="center", va="center", fontsize=9, zorder=3)
+        if i < n - 1:
+            y0 = cy - box_h / 2
+            y1 = centers[i + 1] + box_h / 2
+            ax.annotate("", xy=(cx, y1), xytext=(cx, y0),
+                        arrowprops=dict(arrowstyle="-|>", color="black", lw=1.2),
+                        zorder=1)
+
+    fig.tight_layout()
+    fig.savefig(os.path.join(OUT, "fig3_research_workflow.png"), dpi=DPI)
+    plt.close(fig)
+    print("fig3_research_workflow.png")
+
+
 if __name__ == "__main__":
+    fig3_research_workflow()
     fig1_selector_scatter()
     fig2_method_performance()
     fig3_ciphertext_quality()
