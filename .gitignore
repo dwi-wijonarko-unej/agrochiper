@@ -9,6 +9,7 @@ data/
 *.csv
 dataset/
 dataset*/
+results/
 
 # Python
 __pycache__/
