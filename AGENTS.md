@@ -73,6 +73,7 @@ hitting endpoints with curl.
 **Every push to `main` triggers an automatic production deploy.** GitHub
 Actions (`.github/workflows/deploy.yml`) SSHes into the VPS and runs
 `deploy/deploy.sh`, which does `git fetch && git reset --hard origin/main`,
+removes any stale `coffee-*` containers that would conflict by name,
 `docker compose up -d --build`, then health-checks the four services (60s
 timeout). There is **no staging environment**.
 
