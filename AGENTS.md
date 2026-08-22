@@ -28,8 +28,11 @@ client (multipart image)
 | `selector-service/app.py` | Python / FastAPI | scikit-learn DecisionTree classifier + rule-based fallback model |
 | `encryption-service/app.py` | Python / FastAPI | UHC / Blowfish / Hybrid encryption, decrypt-verify, SQLite logging |
 | `client/batch_runner.py` | Python / requests | Bulk encryption runner with CSV output + resume |
-| `web/` | static HTML + Tailwind CDN | Landing page (`index.html`) + analytics (`analytics.html`) |
+| `web/` | static HTML + Tailwind CDN | Landing page (`index.html`) + analytics (`analytics.html`), served by nginx on port 80 |
 | `docker-compose.yml` | Compose v3.9 | Multi-service orchestration |
+| `.github/workflows/deploy.yml` | GitHub Actions | Auto-deploy to VPS on every push to `main` (SSH + compose rebuild) |
+| `deploy/deploy.sh` | bash | Server-side deploy: `git reset --hard origin/main`, compose build, health checks |
+| `scripts/smoke_test.sh` | bash + curl + python3 (stdlib) | Pre-push verification gate; run before touching `main` |
 | `.env.example` | env | All config/secrets; copy to `.env` before running |
 | `README.md` | docs | Full usage docs (read it first) |
 
@@ -60,8 +63,56 @@ python client/batch_runner.py <dataset_folder> [api_url] [output_csv]
 sqlite3 data/encryption/logs.db "SELECT id, filename, method, psnr FROM encryption_logs ORDER BY id DESC LIMIT 10;"
 ```
 
-There is **no test suite, no linter config, no CI** in this repo. Verify changes
-by running the services (docker compose) and hitting the endpoints with curl.
+There is **no unit-test suite and no linter config**. There IS deployment CI:
+every push to `main` auto-deploys to production (see Deployment below). The
+mandatory verification gate before pushing is `scripts/smoke_test.sh` plus
+hitting endpoints with curl.
+
+## Deployment (`main` = production)
+
+**Every push to `main` triggers an automatic production deploy.** GitHub
+Actions (`.github/workflows/deploy.yml`) SSHes into the VPS and runs
+`deploy/deploy.sh`, which does `git fetch && git reset --hard origin/main`,
+`docker compose up -d --build`, then health-checks the four services (60s
+timeout). There is **no staging environment**.
+
+Rules for agents:
+
+- NEVER commit or push directly to `main` to "test something" — push = deploy.
+- Workflow: feature branch -> `bash scripts/smoke_test.sh` until PASS ->
+  merge/push to `main`.
+- After pushing, watch the Actions run; if deploy fails, fix forward with a new
+  commit (never force-push `main`).
+- Deploy requires GitHub repo secrets: `DEPLOY_HOST`, `DEPLOY_USER`,
+  `DEPLOY_PORT`, `DEPLOY_SSH_KEY` (base64-encoded PRIVATE key).
+- Post-deploy sanity check: hit `/health` on the public URL.
+
+## Testing & Verification Workflow
+
+The pre-push gate is `scripts/smoke_test.sh` (bash + curl + python3 stdlib,
+self-contained — embeds its own noise PNG, no dataset needed):
+
+```bash
+bash scripts/smoke_test.sh              # full gate incl. docker compose build
+bash scripts/smoke_test.sh --no-build   # fast iteration on running containers
+```
+
+It validates, in order:
+
+1. Root `.env` exists; `GATEWAY_API_KEY` is set and exactly 64 chars.
+2. `docker compose up -d --build` succeeds (same command as production deploy).
+3. `/health` returns 200 on gateway 8080, feature 8081, selector 8082,
+   encryption 8083.
+4. Auth fail-closed: `POST /api/v1/encrypt-image` without a key -> `401`;
+   with a wrong key -> `401`.
+5. Happy-path round trip: response contains all `features.*` fields,
+   `selector.decision_code` ∈ {0,1,2}, non-empty `result.method`,
+   `cipher_entropy ≥ 7.0`, and PSNR either `"∞"` or numeric `> 30 dB`
+   (low PSNR = decryption corrupts the image).
+
+Exit code 0 = safe to merge to `main`. Manual curl equivalents are in
+README.md; after deploy also check the web landing page on port **80**
+(`docker-compose.yml` maps `80:80`; older README text mentioning 8084 is stale).
 
 ## Service Contracts (must stay in sync)
 
@@ -107,6 +158,9 @@ else defaults to **Hybrid**. PSNR is a string and `"∞"` means lossless.
 - **The encryption service opens one shared SQLite connection** at import time
   with `check_same_thread=False`; the logs table is created on startup.
 - **Do not commit `.env`, `*.pkl`, dataset folders, or `data/`** to git.
+- **Pushing to `main` deploys to production immediately** (Actions -> SSH ->
+  compose rebuild). Always pass `scripts/smoke_test.sh` first; there is no
+  staging environment to catch mistakes.
 
 ## Environment Variables
 
@@ -121,6 +175,8 @@ else defaults to **Hybrid**. PSNR is a string and `"∞"` means lossless.
 
 ## Common Tasks
 
+- **Verify changes end-to-end**: run `bash scripts/smoke_test.sh` and require
+  exit code 0 before merging/pushing anything to `main`.
 - **Add an encryption algorithm**: extend `cipher_mode` branches in
   `encryption-service/app.py`, update payload tag parsing in decrypt, add a new
   tag byte string (e.g. `b"XXX"`), and document the new mode in the gateway README.
